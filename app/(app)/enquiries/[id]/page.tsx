@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSessionContext } from "@/lib/auth/session";
 import { getEnquiryById, getEnquiryTimeline } from "@/lib/domain/enquiries/queries";
@@ -7,6 +8,7 @@ import { listSpaces } from "@/lib/domain/admin/spaces";
 import { listHoldsForEnquiry } from "@/lib/domain/holds/queries";
 import { listPackages } from "@/lib/domain/admin/packages";
 import { listQuotesForEnquiry, getQuoteDetail } from "@/lib/domain/quotes/queries";
+import { getEventByEnquiryId } from "@/lib/domain/events/queries";
 import { StatusControl } from "./status-control";
 import { ActivityForm } from "./activity-form";
 import { TaskPanel } from "./task-panel";
@@ -19,7 +21,7 @@ export default async function EnquiryDetailPage({ params }: { params: Promise<{ 
   const enquiry = await getEnquiryById(id);
   if (!enquiry) notFound();
 
-  const [timeline, tasks, lostReasons, spaces, holds, packages, quotes] = await Promise.all([
+  const [timeline, tasks, lostReasons, spaces, holds, packages, quotes, event] = await Promise.all([
     getEnquiryTimeline(id),
     listTasksForEnquiry(id),
     listLostReasons(ctx.activeVenueId),
@@ -27,6 +29,7 @@ export default async function EnquiryDetailPage({ params }: { params: Promise<{ 
     listHoldsForEnquiry(id),
     listPackages(ctx.activeVenueId),
     listQuotesForEnquiry(id),
+    getEventByEnquiryId(id),
   ]);
   const draftDetail = quotes[0]?.status === "draft" ? await getQuoteDetail(quotes[0].id) : null;
 
@@ -36,7 +39,14 @@ export default async function EnquiryDetailPage({ params }: { params: Promise<{ 
         <div>
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-semibold">{enquiry.contactName}</h1>
-            <span className="text-sm text-neutral-400">{enquiry.referenceNumber}</span>
+            <div className="flex items-center gap-3">
+              {event && (
+                <Link href={`/events/${event.id}`} className="text-sm underline">
+                  View event
+                </Link>
+              )}
+              <span className="text-sm text-neutral-400">{enquiry.referenceNumber}</span>
+            </div>
           </div>
           <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-neutral-700">
             <Detail label="Phone" value={enquiry.contactPhone} />
@@ -52,7 +62,7 @@ export default async function EnquiryDetailPage({ params }: { params: Promise<{ 
           {enquiry.briefDescription && <p className="mt-3 text-sm text-neutral-600">{enquiry.briefDescription}</p>}
         </div>
 
-        <StatusControl enquiryId={enquiry.id} currentStatus={enquiry.status} lostReasons={lostReasons} />
+        <StatusControl enquiryId={enquiry.id} currentStatus={enquiry.status} lostReasons={lostReasons} spaces={spaces} />
 
         <div>
           <h2 className="mb-2 text-sm font-semibold text-neutral-700">Activity</h2>

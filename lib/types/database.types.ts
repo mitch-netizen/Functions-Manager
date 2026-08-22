@@ -23,7 +23,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type VenueRole = "admin" | "manager" | "coordinator" | "viewer";
 export type HoldType = "tentative" | "confirmed";
 export type PackageCategory = "food" | "beverage" | "room_hire" | "av" | "other";
-export type FileType = "signed_proposal" | "floor_plan" | "client_brief" | "invoice" | "other";
+export type FileType = "signed_proposal" | "floor_plan" | "client_brief" | "invoice" | "other" | "terms_and_conditions";
 export type QuoteStatus = "draft" | "sent" | "accepted" | "declined" | "expired" | "superseded";
 export type EnquirySource = "phone" | "email" | "walk_in" | "website" | "social" | "referral" | "repeat";
 export type EnquiryStatus =
@@ -92,6 +92,7 @@ export interface Database {
           final_numbers_days_before_event: number;
           default_owner_user_id: string | null;
           privacy_notice_url: string | null;
+          terms_and_conditions_file_id: string | null;
           updated_at: string;
         };
         Insert: Partial<Tables["venue_settings"]["Row"]> & { venue_id: string };
@@ -205,7 +206,8 @@ export interface Database {
         Row: {
           id: string;
           venue_id: string;
-          enquiry_id: string;
+          enquiry_id: string | null;
+          event_id: string | null;
           filename: string;
           storage_path: string;
           file_type: FileType;
@@ -214,7 +216,6 @@ export interface Database {
         };
         Insert: Partial<Tables["files"]["Row"]> & {
           venue_id: string;
-          enquiry_id: string;
           filename: string;
           storage_path: string;
           file_type: FileType;
@@ -318,7 +319,8 @@ export interface Database {
         Row: {
           id: string;
           venue_id: string;
-          enquiry_id: string;
+          enquiry_id: string | null;
+          event_id: string | null;
           type: ActivityType;
           body: string | null;
           actor_user_id: string | null;
@@ -326,7 +328,6 @@ export interface Database {
         };
         Insert: Partial<Tables["activities"]["Row"]> & {
           venue_id: string;
-          enquiry_id: string;
           type: ActivityType;
         };
         Update: Partial<Tables["activities"]["Row"]>;
@@ -336,7 +337,8 @@ export interface Database {
         Row: {
           id: string;
           venue_id: string;
-          enquiry_id: string;
+          enquiry_id: string | null;
+          event_id: string | null;
           title: string;
           due_date: string;
           assignee_user_id: string | null;
@@ -347,11 +349,51 @@ export interface Database {
         };
         Insert: Partial<Tables["tasks"]["Row"]> & {
           venue_id: string;
-          enquiry_id: string;
           title: string;
           due_date: string;
         };
         Update: Partial<Tables["tasks"]["Row"]>;
+        Relationships: [];
+      };
+      events: {
+        Row: {
+          id: string;
+          venue_id: string;
+          enquiry_id: string;
+          final_headcount: number | null;
+          confirmed_starts_at: string;
+          confirmed_ends_at: string;
+          bump_in_at: string | null;
+          bump_out_at: string | null;
+          room_setup: string | null;
+          av_requirements: string | null;
+          special_instructions: string | null;
+          run_sheet_notes: string | null;
+          actual_headcount: number | null;
+          actual_spend: number | null;
+          completed_at: string | null;
+          created_at: string;
+        };
+        Insert: never; // written only via confirm_enquiry()
+        Update: Partial<Tables["events"]["Row"]>;
+        Relationships: [];
+      };
+      event_spaces: {
+        Row: { event_id: string; venue_id: string; space_id: string };
+        Insert: Tables["event_spaces"]["Row"];
+        Update: Partial<Tables["event_spaces"]["Row"]>;
+        Relationships: [];
+      };
+      event_packages: {
+        Row: { event_id: string; venue_id: string; package_id: string; quantity: number };
+        Insert: Partial<Tables["event_packages"]["Row"]> & { event_id: string; venue_id: string; package_id: string };
+        Update: Partial<Tables["event_packages"]["Row"]>;
+        Relationships: [];
+      };
+      event_dietary_requirements: {
+        Row: { id: string; venue_id: string; event_id: string; requirement: string; headcount: number };
+        Insert: Partial<Tables["event_dietary_requirements"]["Row"]> & { venue_id: string; event_id: string; requirement: string };
+        Update: Partial<Tables["event_dietary_requirements"]["Row"]>;
         Relationships: [];
       };
       audit_log: {
@@ -380,6 +422,16 @@ export interface Database {
       update_enquiry_status: {
         Args: { p_enquiry_id: string; p_to_status: EnquiryStatus; p_reason_id?: string | null };
         Returns: Tables["enquiries"]["Row"];
+      };
+      confirm_enquiry: {
+        Args: {
+          p_enquiry_id: string;
+          p_confirmed_starts_at: string;
+          p_confirmed_ends_at: string;
+          p_space_ids: string[];
+          p_final_headcount?: number | null;
+        };
+        Returns: Tables["events"]["Row"];
       };
     };
   };
