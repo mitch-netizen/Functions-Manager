@@ -83,6 +83,8 @@ export interface EnquiryDetail {
   organisation: string | null;
   eventTypeId: string | null;
   eventTypeName: string | null;
+  spacePreferenceId: string | null;
+  spacePreferenceName: string | null;
   preferredDate: string | null;
   dateFlexible: boolean;
   headcountEstimate: number | null;
@@ -97,7 +99,7 @@ export async function getEnquiryById(id: string): Promise<EnquiryDetail | null> 
   const { data, error } = await supabase
     .from("enquiries")
     .select(
-      "id, reference_number, status, source, contact_name, contact_email, contact_phone, organisation, event_type_id, preferred_date, date_flexible, headcount_estimate, budget_indication, brief_description, owner_user_id, created_at, event_types(name)"
+      "id, reference_number, status, source, contact_name, contact_email, contact_phone, organisation, event_type_id, space_preference_id, preferred_date, date_flexible, headcount_estimate, budget_indication, brief_description, owner_user_id, created_at, event_types(name), spaces(name)"
     )
     .eq("id", id)
     .maybeSingle<{
@@ -110,6 +112,7 @@ export async function getEnquiryById(id: string): Promise<EnquiryDetail | null> 
       contact_phone: string;
       organisation: string | null;
       event_type_id: string | null;
+      space_preference_id: string | null;
       preferred_date: string | null;
       date_flexible: boolean;
       headcount_estimate: number | null;
@@ -118,6 +121,7 @@ export async function getEnquiryById(id: string): Promise<EnquiryDetail | null> 
       owner_user_id: string | null;
       created_at: string;
       event_types: { name: string } | null;
+      spaces: { name: string } | null;
     }>();
 
   if (error) throw error;
@@ -134,6 +138,8 @@ export async function getEnquiryById(id: string): Promise<EnquiryDetail | null> 
     organisation: data.organisation,
     eventTypeId: data.event_type_id,
     eventTypeName: data.event_types?.name ?? null,
+    spacePreferenceId: data.space_preference_id,
+    spacePreferenceName: data.spaces?.name ?? null,
     preferredDate: data.preferred_date,
     dateFlexible: data.date_flexible,
     headcountEstimate: data.headcount_estimate,

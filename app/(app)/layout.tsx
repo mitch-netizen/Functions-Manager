@@ -14,6 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <nav className="flex items-center gap-4 text-sm font-medium">
           <span className="font-semibold">Functions Manager</span>
           <Link href="/pipeline">Pipeline</Link>
+          <Link href="/calendar">Calendar</Link>
           <Link href="/enquiries/new">New enquiry</Link>
           <Link href="/tasks">My tasks</Link>
           {(ctx.activeRole === "admin" || ctx.activeRole === "manager") && <Link href="/admin/event-types">Admin</Link>}

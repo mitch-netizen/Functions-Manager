@@ -21,6 +21,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type VenueRole = "admin" | "manager" | "coordinator" | "viewer";
+export type HoldType = "tentative" | "confirmed";
 export type EnquirySource = "phone" | "email" | "walk_in" | "website" | "social" | "referral" | "repeat";
 export type EnquiryStatus =
   | "new"
@@ -136,6 +137,48 @@ export interface Database {
         Update: Partial<Tables["lost_reasons"]["Row"]>;
         Relationships: [];
       };
+      spaces: {
+        Row: {
+          id: string;
+          venue_id: string;
+          name: string;
+          capacity_seated: number | null;
+          capacity_standing: number | null;
+          capacity_cocktail: number | null;
+          minimum_spend: number | null;
+          notes: string | null;
+          active: boolean;
+          display_order: number;
+          created_at: string;
+        };
+        Insert: Partial<Tables["spaces"]["Row"]> & { venue_id: string; name: string };
+        Update: Partial<Tables["spaces"]["Row"]>;
+        Relationships: [];
+      };
+      holds: {
+        Row: {
+          id: string;
+          venue_id: string;
+          space_id: string;
+          enquiry_id: string;
+          starts_at: string;
+          ends_at: string;
+          hold_type: HoldType;
+          expires_at: string | null;
+          released_at: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Tables["holds"]["Row"]> & {
+          venue_id: string;
+          space_id: string;
+          enquiry_id: string;
+          starts_at: string;
+          ends_at: string;
+          hold_type: HoldType;
+        };
+        Update: Partial<Tables["holds"]["Row"]>;
+        Relationships: [];
+      };
       enquiries: {
         Row: {
           id: string;
@@ -147,6 +190,7 @@ export interface Database {
           contact_phone: string;
           organisation: string | null;
           event_type_id: string | null;
+          space_preference_id: string | null;
           preferred_date: string | null;
           date_flexible: boolean;
           alternate_dates: string[] | null;

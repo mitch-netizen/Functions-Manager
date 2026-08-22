@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createEnquiry } from "@/lib/domain/enquiries/actions";
 import type { EventTypeRow } from "@/lib/domain/admin/event-types";
+import type { SpaceRow } from "@/lib/domain/admin/spaces";
 
-export function NewEnquiryForm({ eventTypes }: { eventTypes: EventTypeRow[] }) {
+export function NewEnquiryForm({ eventTypes, spaces }: { eventTypes: EventTypeRow[]; spaces: SpaceRow[] }) {
   const router = useRouter();
   const [showMore, setShowMore] = useState(false);
   const [pending, setPending] = useState(false);
@@ -21,6 +22,7 @@ export function NewEnquiryForm({ eventTypes }: { eventTypes: EventTypeRow[] }) {
       contactEmail: String(formData.get("contactEmail") ?? ""),
       organisation: String(formData.get("organisation") ?? ""),
       eventTypeId: String(formData.get("eventTypeId") ?? "") || undefined,
+      spacePreferenceId: String(formData.get("spacePreferenceId") ?? "") || undefined,
       preferredDate: String(formData.get("preferredDate") ?? ""),
       dateFlexible: formData.get("dateFlexible") === "on",
       headcountEstimate: formData.get("headcountEstimate") ? Number(formData.get("headcountEstimate")) : undefined,
@@ -84,6 +86,19 @@ export function NewEnquiryForm({ eventTypes }: { eventTypes: EventTypeRow[] }) {
           <Field label="Email" name="contactEmail" type="email" />
           <Field label="Organisation" name="organisation" />
           <Field label="Budget indication" name="budgetIndication" type="number" min={0} step="0.01" />
+          <div>
+            <label className="block text-sm font-medium text-neutral-700" htmlFor="spacePreferenceId">
+              Space preference
+            </label>
+            <select id="spacePreferenceId" name="spacePreferenceId" className="mt-1 w-full rounded border border-neutral-300 px-3 py-2 text-sm">
+              <option value="">— no preference —</option>
+              {spaces.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <label className="flex items-center gap-2 text-sm text-neutral-700">
             <input type="checkbox" name="dateFlexible" /> Date is flexible
           </label>

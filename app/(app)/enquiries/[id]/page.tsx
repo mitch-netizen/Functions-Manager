@@ -3,9 +3,12 @@ import { requireSessionContext } from "@/lib/auth/session";
 import { getEnquiryById, getEnquiryTimeline } from "@/lib/domain/enquiries/queries";
 import { listTasksForEnquiry } from "@/lib/domain/tasks/queries";
 import { listLostReasons } from "@/lib/domain/admin/lost-reasons";
+import { listSpaces } from "@/lib/domain/admin/spaces";
+import { listHoldsForEnquiry } from "@/lib/domain/holds/queries";
 import { StatusControl } from "./status-control";
 import { ActivityForm } from "./activity-form";
 import { TaskPanel } from "./task-panel";
+import { HoldsPanel } from "./holds-panel";
 
 export default async function EnquiryDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,10 +16,12 @@ export default async function EnquiryDetailPage({ params }: { params: Promise<{ 
   const enquiry = await getEnquiryById(id);
   if (!enquiry) notFound();
 
-  const [timeline, tasks, lostReasons] = await Promise.all([
+  const [timeline, tasks, lostReasons, spaces, holds] = await Promise.all([
     getEnquiryTimeline(id),
     listTasksForEnquiry(id),
     listLostReasons(ctx.activeVenueId),
+    listSpaces(ctx.activeVenueId),
+    listHoldsForEnquiry(id),
   ]);
 
   return (
@@ -32,6 +37,7 @@ export default async function EnquiryDetailPage({ params }: { params: Promise<{ 
             <Detail label="Email" value={enquiry.contactEmail ?? "—"} />
             <Detail label="Organisation" value={enquiry.organisation ?? "—"} />
             <Detail label="Event type" value={enquiry.eventTypeName ?? "—"} />
+            <Detail label="Space preference" value={enquiry.spacePreferenceName ?? "—"} />
             <Detail label="Preferred date" value={enquiry.preferredDate ?? "—"} />
             <Detail label="Headcount" value={enquiry.headcountEstimate ? String(enquiry.headcountEstimate) : "—"} />
             <Detail label="Budget" value={enquiry.budgetIndication ? `$${enquiry.budgetIndication}` : "—"} />
@@ -61,8 +67,9 @@ export default async function EnquiryDetailPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      <div>
+      <div className="space-y-6">
         <TaskPanel enquiryId={enquiry.id} tasks={tasks} />
+        <HoldsPanel enquiryId={enquiry.id} spaces={spaces} holds={holds} />
       </div>
     </div>
   );

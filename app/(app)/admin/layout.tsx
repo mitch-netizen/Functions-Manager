@@ -13,6 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <nav className="mb-6 flex gap-4 border-b border-neutral-200 pb-2 text-sm font-medium text-neutral-600">
         <Link href="/admin/event-types">Event types</Link>
         <Link href="/admin/lost-reasons">Lost reasons</Link>
+        <Link href="/admin/spaces">Spaces</Link>
         <Link href="/admin/users">Users</Link>
         <Link href="/admin/venue-settings">Venue settings</Link>
       </nav>

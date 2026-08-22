@@ -18,6 +18,7 @@ const createEnquirySchema = z.object({
   contactEmail: z.string().email().optional().or(z.literal("")),
   organisation: z.string().optional(),
   eventTypeId: z.string().uuid().optional(),
+  spacePreferenceId: z.string().uuid().optional(),
   preferredDate: z.string().optional(), // yyyy-mm-dd
   dateFlexible: z.boolean().optional(),
   headcountEstimate: z.coerce.number().int().positive().optional(),
@@ -66,6 +67,7 @@ export async function createEnquiry(input: CreateEnquiryInput): Promise<ActionRe
       contact_email: parsed.data.contactEmail || null,
       organisation: parsed.data.organisation || null,
       event_type_id: parsed.data.eventTypeId ?? null,
+      space_preference_id: parsed.data.spacePreferenceId ?? null,
       preferred_date: parsed.data.preferredDate || null,
       date_flexible: parsed.data.dateFlexible ?? false,
       headcount_estimate: parsed.data.headcountEstimate ?? null,
