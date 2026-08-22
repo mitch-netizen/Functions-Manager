@@ -8,13 +8,14 @@ export class ResendEmailSender implements EmailSender {
     this.client = new Resend(apiKey);
   }
 
-  async send({ to, subject, react, tags }: SendEmailInput): Promise<SendEmailResult> {
+  async send({ to, subject, react, tags, attachments }: SendEmailInput): Promise<SendEmailResult> {
     const { data, error } = await this.client.emails.send({
       from: process.env.RESEND_FROM_ADDRESS!,
       to,
       subject,
       react,
       tags: tags ? Object.entries(tags).map(([name, value]) => ({ name, value })) : undefined,
+      attachments: attachments?.map((a) => ({ filename: a.filename, content: a.content })),
     });
 
     if (error) throw new Error(`Resend send failed: ${error.message}`);

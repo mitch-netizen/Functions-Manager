@@ -1,11 +1,17 @@
 import type { ReactElement } from "react";
 
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+}
+
 export interface SendEmailInput {
   to: string;
   subject: string;
   react: ReactElement;
   /** e.g. { venueId, enquiryId } — provider-side tagging, never used for bulk/broadcast sends. */
   tags?: Record<string, string>;
+  attachments?: EmailAttachment[];
 }
 
 export interface SendEmailResult {

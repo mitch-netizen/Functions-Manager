@@ -5,10 +5,13 @@ import { listTasksForEnquiry } from "@/lib/domain/tasks/queries";
 import { listLostReasons } from "@/lib/domain/admin/lost-reasons";
 import { listSpaces } from "@/lib/domain/admin/spaces";
 import { listHoldsForEnquiry } from "@/lib/domain/holds/queries";
+import { listPackages } from "@/lib/domain/admin/packages";
+import { listQuotesForEnquiry, getQuoteDetail } from "@/lib/domain/quotes/queries";
 import { StatusControl } from "./status-control";
 import { ActivityForm } from "./activity-form";
 import { TaskPanel } from "./task-panel";
 import { HoldsPanel } from "./holds-panel";
+import { QuotesPanel } from "./quotes-panel";
 
 export default async function EnquiryDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,13 +19,16 @@ export default async function EnquiryDetailPage({ params }: { params: Promise<{ 
   const enquiry = await getEnquiryById(id);
   if (!enquiry) notFound();
 
-  const [timeline, tasks, lostReasons, spaces, holds] = await Promise.all([
+  const [timeline, tasks, lostReasons, spaces, holds, packages, quotes] = await Promise.all([
     getEnquiryTimeline(id),
     listTasksForEnquiry(id),
     listLostReasons(ctx.activeVenueId),
     listSpaces(ctx.activeVenueId),
     listHoldsForEnquiry(id),
+    listPackages(ctx.activeVenueId),
+    listQuotesForEnquiry(id),
   ]);
+  const draftDetail = quotes[0]?.status === "draft" ? await getQuoteDetail(quotes[0].id) : null;
 
   return (
     <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">
@@ -70,6 +76,7 @@ export default async function EnquiryDetailPage({ params }: { params: Promise<{ 
       <div className="space-y-6">
         <TaskPanel enquiryId={enquiry.id} tasks={tasks} />
         <HoldsPanel enquiryId={enquiry.id} spaces={spaces} holds={holds} />
+        <QuotesPanel enquiryId={enquiry.id} quotes={quotes} draftDetail={draftDetail} packages={packages} />
       </div>
     </div>
   );

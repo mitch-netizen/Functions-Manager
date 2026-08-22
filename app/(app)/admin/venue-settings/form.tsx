@@ -31,6 +31,7 @@ export function VenueSettingsForm({
       timezone: String(formData.get("timezone") ?? "Australia/Brisbane"),
       legalEntityName: String(formData.get("legalEntityName") ?? ""),
       defaultOwnerUserId: String(formData.get("defaultOwnerUserId") ?? "") || undefined,
+      gstRate: Number(formData.get("gstRatePercent") ?? 10) / 100,
     });
     setPending(false);
     if (!result.ok) {
@@ -53,6 +54,7 @@ export function VenueSettingsForm({
         defaultValue={settings.legalEntityName ?? ""}
         placeholder="Not yet confirmed"
       />
+      <Field label="GST rate (%)" name="gstRatePercent" defaultValue={String(settings.gstRate * 100)} />
       <div>
         <label className="block text-sm font-medium text-neutral-700" htmlFor="defaultOwnerUserId">
           Default enquiry owner

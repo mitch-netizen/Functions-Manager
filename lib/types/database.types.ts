@@ -22,6 +22,9 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type VenueRole = "admin" | "manager" | "coordinator" | "viewer";
 export type HoldType = "tentative" | "confirmed";
+export type PackageCategory = "food" | "beverage" | "room_hire" | "av" | "other";
+export type FileType = "signed_proposal" | "floor_plan" | "client_brief" | "invoice" | "other";
+export type QuoteStatus = "draft" | "sent" | "accepted" | "declined" | "expired" | "superseded";
 export type EnquirySource = "phone" | "email" | "walk_in" | "website" | "social" | "referral" | "repeat";
 export type EnquiryStatus =
   | "new"
@@ -177,6 +180,89 @@ export interface Database {
           hold_type: HoldType;
         };
         Update: Partial<Tables["holds"]["Row"]>;
+        Relationships: [];
+      };
+      packages: {
+        Row: {
+          id: string;
+          venue_id: string;
+          name: string;
+          description: string | null;
+          per_head_price: number | null;
+          minimum_numbers: number | null;
+          inclusions: Json;
+          category: PackageCategory;
+          active: boolean;
+          effective_from: string | null;
+          effective_to: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Tables["packages"]["Row"]> & { venue_id: string; name: string; category: PackageCategory };
+        Update: Partial<Tables["packages"]["Row"]>;
+        Relationships: [];
+      };
+      files: {
+        Row: {
+          id: string;
+          venue_id: string;
+          enquiry_id: string;
+          filename: string;
+          storage_path: string;
+          file_type: FileType;
+          uploaded_by: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Tables["files"]["Row"]> & {
+          venue_id: string;
+          enquiry_id: string;
+          filename: string;
+          storage_path: string;
+          file_type: FileType;
+        };
+        Update: Partial<Tables["files"]["Row"]>;
+        Relationships: [];
+      };
+      quotes: {
+        Row: {
+          id: string;
+          venue_id: string;
+          enquiry_id: string;
+          version: number;
+          status: QuoteStatus;
+          subtotal: number;
+          gst_amount: number;
+          total: number;
+          minimum_spend_applied: number | null;
+          valid_until: string | null;
+          pdf_file_id: string | null;
+          sent_at: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Tables["quotes"]["Row"]> & { venue_id: string; enquiry_id: string; version: number };
+        Update: Partial<Tables["quotes"]["Row"]>;
+        Relationships: [];
+      };
+      quote_line_items: {
+        Row: {
+          id: string;
+          venue_id: string;
+          quote_id: string;
+          package_id: string | null;
+          description: string;
+          quantity: number;
+          unit_price: number;
+          line_total: number;
+          display_order: number;
+        };
+        Insert: Partial<Tables["quote_line_items"]["Row"]> & {
+          venue_id: string;
+          quote_id: string;
+          description: string;
+          unit_price: number;
+          line_total: number;
+        };
+        Update: Partial<Tables["quote_line_items"]["Row"]>;
         Relationships: [];
       };
       enquiries: {

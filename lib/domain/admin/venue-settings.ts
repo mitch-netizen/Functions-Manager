@@ -13,6 +13,7 @@ export interface VenueGeneralSettings {
   timezone: string;
   legalEntityName: string | null;
   defaultOwnerUserId: string | null;
+  gstRate: number;
 }
 
 /** Combines venues + venue_settings — split across two tables (see DECISIONS.md), presented as one form. */
@@ -28,7 +29,7 @@ export async function getVenueGeneralSettings(venueId: string): Promise<VenueGen
 
   const { data: settings, error: settingsError } = await supabase
     .from("venue_settings")
-    .select("legal_entity_name, default_owner_user_id")
+    .select("legal_entity_name, default_owner_user_id, gst_rate")
     .eq("venue_id", venueId)
     .maybeSingle();
   if (settingsError) throw settingsError;
@@ -41,6 +42,7 @@ export async function getVenueGeneralSettings(venueId: string): Promise<VenueGen
     timezone: venue.timezone,
     legalEntityName: settings?.legal_entity_name ?? null,
     defaultOwnerUserId: settings?.default_owner_user_id ?? null,
+    gstRate: settings?.gst_rate ?? 0.1,
   };
 }
 
@@ -53,6 +55,7 @@ const updateSchema = z.object({
   timezone: z.string().min(1),
   legalEntityName: z.string().optional(),
   defaultOwnerUserId: z.string().uuid().optional(),
+  gstRate: z.coerce.number().min(0).max(1),
 });
 
 export async function updateVenueGeneralSettings(input: z.infer<typeof updateSchema>): Promise<ActionResult<null>> {
@@ -78,6 +81,7 @@ export async function updateVenueGeneralSettings(input: z.infer<typeof updateSch
     .update({
       legal_entity_name: parsed.data.legalEntityName || null,
       default_owner_user_id: parsed.data.defaultOwnerUserId ?? null,
+      gst_rate: parsed.data.gstRate,
     })
     .eq("venue_id", parsed.data.venueId);
   if (settingsError) return { ok: false, error: settingsError.message };
