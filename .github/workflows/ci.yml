@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - run: npm run test:unit
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase and apply migrations
+        run: supabase start
+
+      - name: Export local Supabase connection details for RLS tests
+        run: |
+          supabase status -o env \
+            | sed -e 's/^API_URL=/SUPABASE_TEST_URL=/' \
+                  -e 's/^ANON_KEY=/SUPABASE_TEST_ANON_KEY=/' \
+                  -e 's/^SERVICE_ROLE_KEY=/SUPABASE_TEST_SERVICE_ROLE_KEY=/' \
+            | grep -E '^SUPABASE_TEST_' \
+            >> "$GITHUB_ENV"
+
+      - name: RLS cross-venue denial tests
+        run: npm run test:rls
+
+      # lib/types/database.types.ts currently ships as a documented,
+      # hand-written placeholder (see DECISIONS.md) because Supabase
+      # project provisioning is blocked on an overdue invoice in the
+      # target organization. Once a real project exists and this file is
+      # regenerated from it, add a gate here comparing
+      # `supabase gen types typescript --local` output against the
+      # committed file so it can never silently drift again.

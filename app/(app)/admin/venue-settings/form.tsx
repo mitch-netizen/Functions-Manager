@@ -1,0 +1,111 @@
+"use client";
+
+import { useState } from "react";
+import { updateVenueGeneralSettings } from "@/lib/domain/admin/venue-settings";
+import type { VenueGeneralSettings } from "@/lib/domain/admin/venue-settings";
+import type { VenueUserRow } from "@/lib/domain/admin/venue-users";
+
+export function VenueSettingsForm({
+  venueId,
+  settings,
+  users,
+}: {
+  venueId: string;
+  settings: VenueGeneralSettings;
+  users: VenueUserRow[];
+}) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  async function handleSubmit(formData: FormData) {
+    setPending(true);
+    setError(null);
+    setSaved(false);
+    const result = await updateVenueGeneralSettings({
+      venueId,
+      name: String(formData.get("name") ?? ""),
+      tradingName: String(formData.get("tradingName") ?? ""),
+      address: String(formData.get("address") ?? ""),
+      abn: String(formData.get("abn") ?? ""),
+      timezone: String(formData.get("timezone") ?? "Australia/Brisbane"),
+      legalEntityName: String(formData.get("legalEntityName") ?? ""),
+      defaultOwnerUserId: String(formData.get("defaultOwnerUserId") ?? "") || undefined,
+    });
+    setPending(false);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setSaved(true);
+  }
+
+  return (
+    <form action={handleSubmit} className="max-w-md space-y-3">
+      <Field label="Venue name" name="name" defaultValue={settings.name} required />
+      <Field label="Trading name" name="tradingName" defaultValue={settings.tradingName ?? ""} />
+      <Field label="Address" name="address" defaultValue={settings.address ?? ""} />
+      <Field label="ABN" name="abn" defaultValue={settings.abn ?? ""} placeholder="Not yet confirmed" />
+      <Field label="Timezone" name="timezone" defaultValue={settings.timezone} />
+      <Field
+        label="Legal entity name (for quotes)"
+        name="legalEntityName"
+        defaultValue={settings.legalEntityName ?? ""}
+        placeholder="Not yet confirmed"
+      />
+      <div>
+        <label className="block text-sm font-medium text-neutral-700" htmlFor="defaultOwnerUserId">
+          Default enquiry owner
+        </label>
+        <select
+          id="defaultOwnerUserId"
+          name="defaultOwnerUserId"
+          defaultValue={settings.defaultOwnerUserId ?? ""}
+          className="mt-1 w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+        >
+          <option value="">— none —</option>
+          {users.map((u) => (
+            <option key={u.userId} value={u.userId}>
+              {u.fullName ?? u.email}
+            </option>
+          ))}
+        </select>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      {saved && <p className="text-sm text-green-700">Saved.</p>}
+      <button type="submit" disabled={pending} className="rounded bg-neutral-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50">
+        Save
+      </button>
+    </form>
+  );
+}
+
+function Field({
+  label,
+  name,
+  defaultValue,
+  required,
+  placeholder,
+}: {
+  label: string;
+  name: string;
+  defaultValue: string;
+  required?: boolean;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-neutral-700" htmlFor={name}>
+        {label}
+      </label>
+      <input
+        id={name}
+        name={name}
+        defaultValue={defaultValue}
+        required={required}
+        placeholder={placeholder}
+        className="mt-1 w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+      />
+    </div>
+  );
+}
