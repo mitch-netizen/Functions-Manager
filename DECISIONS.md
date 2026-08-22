@@ -163,3 +163,76 @@ rather than building for multiple cases.
   RLS-scoped query and filters the pipeline view uses, so an export can
   never exceed what the view itself would show. Additional resources are
   added the same way: wire in an existing list query, never a bespoke one.
+
+## RMS accommodation booking + OpenTable (addendum)
+
+- **RMS is a real integration; OpenTable is a manual-task workaround, not a
+  fake sync.** The venue has RMS Cloud API credentials but only a standard
+  OpenTable restaurant account — OpenTable's table-management API
+  (GuestCenter) is not self-serve for an individual venue. Rather than
+  pretend to integrate with something we have no API access to,
+  `confirmEnquiry()` creates a second inline task (`source:
+  "auto_opentable_block"`, same pattern as the existing final-details task)
+  reminding staff to block the tables manually. This is swappable for a
+  real API call later if partner access is ever granted — the call site is
+  a single, isolated block in `lib/domain/events/actions.ts`.
+- **RMS credentials live in a dedicated `venue_rms_credentials` table, not
+  columns on `venue_settings`.** `venue_settings`'s SELECT policy is
+  deliberately unrestricted ("any venue member") because it has only ever
+  held non-secret operational timing defaults; adding a real third-party
+  API secret to that table would leak it to every coordinator/viewer.
+  `venue_rms_credentials` gets its own admin/manager-only select/write
+  policies instead — the same trust tier as `SUPABASE_SERVICE_ROLE_KEY`/
+  `RESEND_API_KEY`, and the fourth documented case of a secret that must
+  never reach a client bundle or a request path outside server
+  actions/route handlers.
+- **Accommodation is a venue-managed room block, not a single self-booking
+  or an RMS-native block primitive.** RMS has no "hold N rooms for this
+  wedding" concept we call into — `accommodation_blocks.rooms_held` is
+  Functions Manager's own ledger of how many rooms staff have told guests
+  they can book. Each individual guest's booking is still checked against
+  RMS's live availability and created as a real reservation at booking
+  time (`lib/integrations/rms/client.ts`'s `checkAvailability`/
+  `createBooking`); our own capacity check in
+  `record_public_accommodation_booking()` is a backstop against overselling
+  the *block*, independent of and in addition to RMS's own real-room
+  availability.
+- **`app/api/public-accommodation/route.ts` is the fourth documented
+  exception to "no service-role client in a request-scoped path"** (after
+  the cron route, public-enquiry's post-insert step, and venue onboarding/
+  invites) — and the first to need the admin client *before* the write,
+  not just after. An anonymous guest has no session to scope an RLS-scoped
+  client to, and this route needs to read the block's `venue_id` and that
+  venue's RMS credentials (admin/manager-only under RLS) before it can
+  even call RMS. The actual authorization (honeypot, rate limit, block
+  active/window/capacity checks) is still entirely inside
+  `record_public_accommodation_booking()`'s own `SECURITY DEFINER` logic —
+  the admin client is the transport, not a widening of who can book.
+- **A compensating `cancelBooking` call is required, and is the one place
+  in this addendum where two systems can disagree.** The booking flow
+  calls RMS to create a real reservation *before* our own capacity/rate-
+  limit check runs (RMS has no way to participate in that check), so a
+  guest who loses a race against another guest for the last room in a
+  block has already been told "yes" by RMS. `lib/domain/accommodation/
+  booking-flow.ts`'s `bookAccommodation()` calls `RmsClient.cancelBooking()`
+  in that case; if the cancellation call itself fails, the failure is
+  swallowed (the guest is correctly told the booking failed either way) and
+  a human has to reconcile it directly in RMS — there is no way to make
+  this fully atomic across two independent systems without a distributed
+  transaction neither RMS nor this app supports.
+- **`lib/integrations/rms/rms-cloud-client.ts`'s endpoint paths and payload
+  shapes are structurally-reasonable placeholders, not confirmed against
+  RMS's real API contract.** This sandbox's network egress proxy blocked
+  every attempt to fetch RMS Cloud's own documentation
+  (`restapidocs.rmscloud.com`, the RMSHospitality SwaggerHub page, and the
+  RMS Postman workspace all returned `EGRESS_BLOCKED`). Every `// TODO`
+  in that file marks a spot that must be verified against RMS's actual
+  docs/Postman collection before it is used against a live property — the
+  `RmsClient` interface itself (`lib/integrations/rms/client.ts`) is stable
+  and what the rest of the app is built against, so fixing the
+  implementation later needs no call-site changes, same as swapping the
+  `EmailSender` implementation.
+- `accommodation_blocks.rms_room_type_code` is free text staff enter to
+  match a real RMS room type code, not a locally-synced lookup table — no
+  "list room types" RMS call is wired up yet. Worth revisiting if room-type
+  sync becomes wanted.

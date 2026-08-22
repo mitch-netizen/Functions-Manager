@@ -21,6 +21,14 @@ import type { Database } from "@/lib/types/database.types";
  *    has no RLS-scoped equivalent) — the resulting venue_users row is still
  *    inserted through the normal RLS-scoped client, so venue membership
  *    itself remains authorized by policy, not by this client.
+ *  - app/api/public-accommodation/route.ts, for the same reason as
+ *    public-enquiry's exception, but here needed *before* the write too:
+ *    an anonymous guest's booking request needs the block's venue_id and
+ *    that venue's RMS credentials (venue_rms_credentials is admin/manager-
+ *    only under RLS) before it can even call RMS. Authorization is still
+ *    entirely inside record_public_accommodation_booking()'s own SECURITY
+ *    DEFINER checks — this client is the transport, not a widening of who
+ *    can book.
  */
 export function createAdminClient() {
   return createSupabaseClient<Database>(

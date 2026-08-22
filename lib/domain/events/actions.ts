@@ -65,6 +65,21 @@ export async function confirmEnquiry(input: z.infer<typeof confirmEnquirySchema>
     source: "auto_event_confirmed",
   });
 
+  // The venue has no OpenTable partner/API access, so table-blocking can't
+  // be automated (see DECISIONS.md) — a manual task is the honest
+  // workaround until that changes, rather than pretending to sync.
+  await supabase.from("tasks").insert({
+    venue_id: ctx.activeVenueId,
+    event_id: event.id,
+    title: `Block tables in OpenTable for ${enquiry?.contact_name ?? "this event"}'s function (${format(
+      new Date(parsed.data.confirmedStartsAt),
+      "d MMM yyyy, h:mma"
+    )} – ${format(new Date(parsed.data.confirmedEndsAt), "h:mma")})`,
+    due_date: format(new Date(parsed.data.confirmedStartsAt), "yyyy-MM-dd"),
+    assignee_user_id: ctx.userId,
+    source: "auto_opentable_block",
+  });
+
   if (enquiry?.contact_email) {
     try {
       const { data: venue } = await supabase.from("venues").select("name, brand_config").eq("id", ctx.activeVenueId).single();

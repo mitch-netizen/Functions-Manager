@@ -1,16 +1,30 @@
 // Generated from the live "The Queens" Supabase project
 // (zbzoymnunjwwgwgklaui, ap-southeast-2) via
 // `mcp__Supabase__generate_typescript_types` after applying every migration
-// in supabase/migrations/ through 20260822150000_p7_security_hardening.sql.
-// Never hand-edited — regenerate wholesale after any future migration.
+// through 20260822160000_p8_accommodation_and_opentable.sql. Never
+// hand-edited beyond the two narrow, documented deviations below —
+// regenerate wholesale after any future migration and reapply both:
 //
-// The convenience Enum aliases at the bottom of this file (VenueRole,
-// HoldType, etc.) are not part of the generator's output — they are kept so
-// call sites written against the earlier hand-written placeholder didn't
-// need to change import shape when this file was replaced with the real
-// generated types.
+// 1. Two RPC Args blocks (create_public_enquiry, below and
+//    record_public_accommodation_booking) have several params widened to
+//    `| null` by hand. The generator (PostgREST 14.15) omits `| null` from
+//    any function arg without a SQL-level default, even when the function
+//    body treats it as optional — Postgres function parameters are always
+//    callable with NULL regardless of declared type. Each widened block
+//    carries its own comment explaining exactly which params and why.
+// 2. The convenience Enum aliases at the very end of this file (VenueRole,
+//    HoldType, etc.) are not part of the generator's output — kept so call
+//    sites written against the earlier hand-written placeholder didn't
+//    need to change import shape when this file was replaced with real
+//    generated types.
 
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -20,6 +34,126 @@ export type Database = {
   }
   public: {
     Tables: {
+      accommodation_blocks: {
+        Row: {
+          check_in_window_end: string
+          check_in_window_start: string
+          created_at: string
+          created_by: string | null
+          event_id: string
+          id: string
+          nights_allowed: number
+          public_token: string
+          rms_room_type_code: string
+          rooms_held: number
+          status: Database["public"]["Enums"]["accommodation_block_status"]
+          venue_id: string
+        }
+        Insert: {
+          check_in_window_end: string
+          check_in_window_start: string
+          created_at?: string
+          created_by?: string | null
+          event_id: string
+          id?: string
+          nights_allowed?: number
+          public_token?: string
+          rms_room_type_code: string
+          rooms_held: number
+          status?: Database["public"]["Enums"]["accommodation_block_status"]
+          venue_id: string
+        }
+        Update: {
+          check_in_window_end?: string
+          check_in_window_start?: string
+          created_at?: string
+          created_by?: string | null
+          event_id?: string
+          id?: string
+          nights_allowed?: number
+          public_token?: string
+          rms_room_type_code?: string
+          rooms_held?: number
+          status?: Database["public"]["Enums"]["accommodation_block_status"]
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accommodation_blocks_venue_id_event_id_fkey"
+            columns: ["venue_id", "event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["venue_id", "id"]
+          },
+          {
+            foreignKeyName: "accommodation_blocks_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accommodation_bookings: {
+        Row: {
+          block_id: string
+          check_in: string
+          check_out: string
+          created_at: string
+          guest_email: string | null
+          guest_name: string
+          guest_phone: string | null
+          id: string
+          rms_booking_reference: string
+          room_type_code: string
+          status: Database["public"]["Enums"]["accommodation_booking_status"]
+          venue_id: string
+        }
+        Insert: {
+          block_id: string
+          check_in: string
+          check_out: string
+          created_at?: string
+          guest_email?: string | null
+          guest_name: string
+          guest_phone?: string | null
+          id?: string
+          rms_booking_reference: string
+          room_type_code: string
+          status?: Database["public"]["Enums"]["accommodation_booking_status"]
+          venue_id: string
+        }
+        Update: {
+          block_id?: string
+          check_in?: string
+          check_out?: string
+          created_at?: string
+          guest_email?: string | null
+          guest_name?: string
+          guest_phone?: string | null
+          id?: string
+          rms_booking_reference?: string
+          room_type_code?: string
+          status?: Database["public"]["Enums"]["accommodation_booking_status"]
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accommodation_bookings_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "accommodation_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accommodation_bookings_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activities: {
         Row: {
           actor_user_id: string | null
@@ -744,6 +878,38 @@ export type Database = {
         }
         Relationships: []
       }
+      public_accommodation_rate_limit: {
+        Row: {
+          block_id: string
+          count: number
+          id: string
+          ip_hash: string
+          window_start: string
+        }
+        Insert: {
+          block_id: string
+          count?: number
+          id?: string
+          ip_hash: string
+          window_start: string
+        }
+        Update: {
+          block_id?: string
+          count?: number
+          id?: string
+          ip_hash?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_accommodation_rate_limit_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "accommodation_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_enquiry_rate_limit: {
         Row: {
           count: number
@@ -1044,6 +1210,38 @@ export type Database = {
           },
         ]
       }
+      venue_rms_credentials: {
+        Row: {
+          rms_agent_id: string | null
+          rms_api_key: string | null
+          rms_client_id: string | null
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          rms_agent_id?: string | null
+          rms_api_key?: string | null
+          rms_client_id?: string | null
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          rms_agent_id?: string | null
+          rms_api_key?: string | null
+          rms_client_id?: string | null
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_rms_credentials_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: true
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venue_settings: {
         Row: {
           default_followup_new_enquiry_business_days: number
@@ -1253,6 +1451,20 @@ export type Database = {
           reference_number: string
         }[]
       }
+      get_public_accommodation_block: {
+        Args: { p_token: string }
+        Returns: {
+          block_id: string
+          brand_config: Json
+          check_in_window_end: string
+          check_in_window_start: string
+          nights_allowed: number
+          room_type_code: string
+          rooms_remaining: number
+          venue_id: string
+          venue_name: string
+        }[]
+      }
       get_public_event_types: {
         Args: { p_slug: string }
         Returns: {
@@ -1270,6 +1482,27 @@ export type Database = {
         }[]
       }
       next_enquiry_reference: { Args: { p_venue_id: string }; Returns: string }
+      record_public_accommodation_booking: {
+        // Same generator limitation as create_public_enquiry above:
+        // p_guest_email/p_guest_phone/p_honeypot have no SQL-level default
+        // but are genuinely nullable at the call layer, so they're widened
+        // by hand here — reapply after a wholesale regeneration.
+        Args: {
+          p_block_token: string
+          p_check_in: string
+          p_check_out: string
+          p_guest_email: string | null
+          p_guest_name: string
+          p_guest_phone: string | null
+          p_honeypot: string | null
+          p_ip_hash: string
+          p_rms_booking_reference: string
+          p_room_type_code: string
+        }
+        Returns: {
+          booking_id: string
+        }[]
+      }
       update_enquiry_status: {
         Args: {
           p_enquiry_id: string
@@ -1302,6 +1535,8 @@ export type Database = {
       }
     }
     Enums: {
+      accommodation_block_status: "active" | "closed" | "expired"
+      accommodation_booking_status: "confirmed" | "cancelled"
       activity_type:
         | "note"
         | "email_sent"
@@ -1352,6 +1587,180 @@ export type Database = {
   }
 }
 
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      accommodation_block_status: ["active", "closed", "expired"],
+      accommodation_booking_status: ["confirmed", "cancelled"],
+      activity_type: [
+        "note",
+        "email_sent",
+        "email_received",
+        "call",
+        "meeting",
+        "site_visit",
+        "status_change",
+        "file_upload",
+      ],
+      enquiry_source: [
+        "phone",
+        "email",
+        "walk_in",
+        "website",
+        "social",
+        "referral",
+        "repeat",
+      ],
+      enquiry_status: [
+        "new",
+        "qualifying",
+        "proposal_sent",
+        "tentative",
+        "confirmed",
+        "completed",
+        "lost",
+        "cancelled",
+      ],
+      file_type: [
+        "signed_proposal",
+        "floor_plan",
+        "client_brief",
+        "invoice",
+        "other",
+        "terms_and_conditions",
+      ],
+      hold_type: ["tentative", "confirmed"],
+      package_category: ["food", "beverage", "room_hire", "av", "other"],
+      quote_status: [
+        "draft",
+        "sent",
+        "accepted",
+        "declined",
+        "expired",
+        "superseded",
+      ],
+      venue_role: ["admin", "manager", "coordinator", "viewer"],
+    },
+  },
+} as const
+
 // Convenience aliases (not part of the generator's output — see file header).
 export type VenueRole = Database["public"]["Enums"]["venue_role"];
 export type HoldType = Database["public"]["Enums"]["hold_type"];
@@ -1361,3 +1770,5 @@ export type QuoteStatus = Database["public"]["Enums"]["quote_status"];
 export type EnquirySource = Database["public"]["Enums"]["enquiry_source"];
 export type EnquiryStatus = Database["public"]["Enums"]["enquiry_status"];
 export type ActivityType = Database["public"]["Enums"]["activity_type"];
+export type AccommodationBlockStatus = Database["public"]["Enums"]["accommodation_block_status"];
+export type AccommodationBookingStatus = Database["public"]["Enums"]["accommodation_booking_status"];

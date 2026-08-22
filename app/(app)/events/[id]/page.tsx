@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getEventById } from "@/lib/domain/events/queries";
+import { listAccommodationBlocksForEvent } from "@/lib/domain/accommodation/queries";
 import { EventDetailsForm } from "./details-form";
 import { DietaryPanel } from "./dietary-panel";
 import { CompleteEventForm } from "./complete-form";
+import { AccommodationPanel } from "./accommodation-panel";
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const event = await getEventById(id);
+  const [event, accommodationBlocks] = await Promise.all([getEventById(id), listAccommodationBlocksForEvent(id)]);
   if (!event) notFound();
 
   const now = new Date();
@@ -48,6 +50,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
         <EventDetailsForm event={event} />
         <DietaryPanel eventId={event.id} dietaryRequirements={event.dietaryRequirements} />
+        <AccommodationPanel eventId={event.id} blocks={accommodationBlocks} />
       </div>
 
       <div>
