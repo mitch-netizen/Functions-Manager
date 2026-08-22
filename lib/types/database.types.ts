@@ -415,6 +415,12 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      public_enquiry_rate_limit: {
+        Row: { id: string; ip_hash: string; venue_id: string; window_start: string; count: number };
+        Insert: never; // written only inside create_public_enquiry()
+        Update: never;
+        Relationships: [];
+      };
       audit_log: {
         Row: {
           id: string;
@@ -451,6 +457,29 @@ export interface Database {
           p_final_headcount?: number | null;
         };
         Returns: Tables["events"]["Row"];
+      };
+      get_public_venue_info: {
+        Args: { p_slug: string };
+        Returns: { venue_id: string; name: string; brand_config: Json; privacy_notice_url: string | null }[];
+      };
+      get_public_event_types: {
+        Args: { p_slug: string };
+        Returns: { id: string; name: string }[];
+      };
+      create_public_enquiry: {
+        Args: {
+          p_venue_slug: string;
+          p_contact_name: string;
+          p_contact_phone: string;
+          p_contact_email: string | null;
+          p_preferred_date: string | null;
+          p_headcount_estimate: number | null;
+          p_event_type_id: string | null;
+          p_brief_description: string | null;
+          p_ip_hash: string;
+          p_honeypot: string | null;
+        };
+        Returns: { enquiry_id: string; reference_number: string }[];
       };
     };
   };

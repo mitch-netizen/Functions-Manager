@@ -89,6 +89,22 @@ rather than building for multiple cases.
 - Public enquiry form spam protection (Phase 6) is a honeypot field plus
   per-IP-hash rate limiting inside the insert RPC, no third-party CAPTCHA
   dependency in v1.
+- `next_enquiry_reference()`'s mechanical counter-increment logic was
+  extracted into `allocate_enquiry_reference()` (redefined via `create or
+  replace` in the Phase 6 migration, not by editing Phase 1's file) so the
+  public path can allocate a reference number too — an anonymous caller
+  has no `venue_users` row, so `next_enquiry_reference()`'s own membership
+  check would always reject it. `create_public_enquiry()` calls the shared
+  helper directly and applies its own, different authorization model
+  (venue must exist and be active, plus rate-limit/honeypot checks)
+  instead.
+- `create_public_enquiry()`'s use of the service-role client is a third,
+  narrow, documented exception to "no service role key in a request-scoped
+  path": an anonymous public submission has no user session at all to
+  scope an RLS-scoped client to, so `app/api/public-enquiry/route.ts` uses
+  the admin client purely to look up the enquiry's assigned owner and send
+  the acknowledgement/notification emails after the RPC itself (which does
+  the actual insert under its own SECURITY DEFINER checks) succeeds.
 - CSV export and reference-number formatting are hand-rolled utilities, not
   third-party dependencies — both are one-function problems.
 - RLS cross-venue denial tests are written as Vitest/TypeScript integration

@@ -24,6 +24,11 @@ export function adminClient(): SupabaseClient<Database> {
   return createClient<Database>(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 
+/** An unauthenticated (anon) client — for exercising the Phase 6 public-form RPCs exactly as a website visitor would call them. */
+export function anonClient(): SupabaseClient<Database> {
+  return createClient<Database>(SUPABASE_URL, ANON_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
 export interface TestVenue {
   venueId: string;
   slug: string;

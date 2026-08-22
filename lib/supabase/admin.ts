@@ -10,7 +10,11 @@ import type { Database } from "@/lib/types/database.types";
  * The only sanctioned callers, per DECISIONS.md, are:
  *  - app/api/cron/automation/route.ts (a system-triggered sweep across all
  *    venues, not a single user's request)
- *  - the public-enquiry insert path's spam/rate-limit pre-check (Phase 6)
+ *  - app/api/public-enquiry/route.ts's post-insert notification step ONLY
+ *    (the insert itself goes through the create_public_enquiry() RPC under
+ *    its own SECURITY DEFINER checks; an anonymous submission has no user
+ *    session to scope an RLS-scoped client to for the owner lookup + emails
+ *    that follow)
  *  - one-off venue onboarding scripts (a new venue's first admin row can't
  *    be created by an RLS-scoped user, since none exists yet)
  *  - lib/domain/admin/venue-users.ts's invite step ONLY (auth.admin.inviteUserByEmail
