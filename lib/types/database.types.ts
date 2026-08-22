@@ -396,6 +396,25 @@ export interface Database {
         Update: Partial<Tables["event_dietary_requirements"]["Row"]>;
         Relationships: [];
       };
+      automation_job_runs: {
+        Row: {
+          id: string;
+          rule_key: string;
+          subject_table: string;
+          subject_id: string;
+          occurrence_key: string;
+          fired_at: string;
+        };
+        // Unlike events/audit_log/enquiry_status_history (never, backed by
+        // an RPC or trigger instead), this table has no RPC wrapper — the
+        // cron route's admin client inserts directly. "No client policy"
+        // in the migration means no RLS-scoped INSERT policy exists, which
+        // is a Postgres-level distinction the admin vs RLS-scoped client
+        // split enforces at runtime; TS has no equivalent to encode here.
+        Insert: Partial<Tables["automation_job_runs"]["Row"]> & { rule_key: string; subject_table: string; subject_id: string };
+        Update: never;
+        Relationships: [];
+      };
       audit_log: {
         Row: {
           id: string;

@@ -58,8 +58,31 @@ rather than building for multiple cases.
   membership itself is still authorized by policy (caller must be an admin
   of that venue), not by the admin client.
 - Automation idempotency is a single generic `automation_job_runs` ledger
-  table (`rule_key` + `subject_table` + `subject_id`, unique constraint),
-  not per-rule dedupe flags scattered across domain tables.
+  table (`rule_key` + `subject_table` + `subject_id` + `occurrence_key`,
+  unique constraint), not per-rule dedupe flags scattered across domain
+  tables. `occurrence_key` defaults to `''` for rules tied to a one-time
+  event (a hold's single expiry, an event's single final-numbers
+  reminder); the stale-enquiry rule sets it to the enquiry's
+  last-activity timestamp, so a fresh staleness episode after a new
+  activity resets the clock can fire again rather than being permanently
+  suppressed by the first occurrence.
+- The automation cron runs once daily and compares against `now` in server
+  (UTC) time rather than converting every check into each venue's local
+  calendar day — for daily-cadence reminders (days-before-event,
+  days-since-activity) a few hours of slop near a venue's local midnight
+  is an acceptable simplification, not worth the added complexity of
+  per-venue day-boundary math.
+- A quote's minimum-spend handling (brief doesn't specify the mechanics):
+  `subtotal` always reflects the raw line-item sum; if the enquiry's
+  preferred space has a minimum spend exceeding that sum,
+  `minimum_spend_applied` records it and `total`/`gst_amount` are computed
+  from the minimum instead of the raw subtotal.
+- Dashboard "pipeline value weighted by status" (brief doesn't specify
+  weights): an open enquiry's latest quote total (or `budget_indication`
+  if no quote exists yet) is multiplied by a per-status weight
+  approximating conversion likelihood (new 0.1 ... confirmed 1.0), summed
+  across all open enquiries. See `STATUS_WEIGHTS` in
+  `lib/domain/dashboard/queries.ts`.
 - Business-day math treats Monday–Friday as business days with no public
   holiday calendar in v1 — the brief does not supply a holiday data source,
   and building/maintaining one is out of proportion for v1.
