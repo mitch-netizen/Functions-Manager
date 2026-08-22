@@ -183,7 +183,7 @@ export async function updateEnquiryStatus(input: z.infer<typeof updateStatusSche
   const { error, data } = await supabase.rpc("update_enquiry_status", {
     p_enquiry_id: parsed.data.enquiryId,
     p_to_status: parsed.data.toStatus as EnquiryStatus,
-    p_reason_id: parsed.data.reasonId ?? null,
+    p_reason_id: parsed.data.reasonId ?? undefined,
   });
   if (error) return { ok: false, error: error.message };
 

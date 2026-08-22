@@ -37,7 +37,7 @@ export async function confirmEnquiry(input: z.infer<typeof confirmEnquirySchema>
     p_confirmed_starts_at: new Date(parsed.data.confirmedStartsAt).toISOString(),
     p_confirmed_ends_at: new Date(parsed.data.confirmedEndsAt).toISOString(),
     p_space_ids: parsed.data.spaceIds,
-    p_final_headcount: parsed.data.finalHeadcount ?? null,
+    p_final_headcount: parsed.data.finalHeadcount ?? undefined,
   });
   if (error || !event) return { ok: false, error: error?.message ?? "failed to confirm enquiry" };
 

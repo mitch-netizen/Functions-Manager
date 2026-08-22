@@ -110,10 +110,56 @@ rather than building for multiple cases.
 - RLS cross-venue denial tests are written as Vitest/TypeScript integration
   tests against a local Supabase Postgres instance, not pgTAP, to keep one
   test runner for the whole stack.
-- `lib/types/database.types.ts` must be generated from the live schema
+- `lib/types/database.types.ts` is generated from the live schema
   (`mcp__Supabase__generate_typescript_types` or `supabase gen types
-  typescript`) and is never hand-edited going forward. It currently ships
-  as an explicitly-labelled placeholder because Supabase project
-  provisioning for this workspace is blocked on an overdue invoice on the
-  "FlowLab Solutions" organization — regenerate and replace it as the first
-  step once a project exists and the Phase 1 migration has been applied.
+  typescript`) and is never hand-edited going forward, with one narrow,
+  documented exception: the generator (PostgREST 14.15, as observed against
+  the live project) omits `| null` from any RPC function argument that has
+  no SQL-level default, even when the function body treats it as optional —
+  Postgres itself allows NULL for any function parameter regardless of
+  declared type, since parameters carry no NOT NULL constraint the way
+  columns do. `create_public_enquiry`'s six genuinely-optional args
+  (contact_email, preferred_date, headcount_estimate, event_type_id,
+  brief_description, honeypot) are hand-widened to `| null` in the
+  generated file so call sites don't need a type-assertion cast; a future
+  wholesale regeneration will drop this widening and needs it reapplied
+  (see the comment left in the file itself). Params with an actual SQL
+  default (`confirm_enquiry.p_final_headcount`,
+  `update_enquiry_status.p_reason_id`) don't need this — the generator
+  already marks those optional, so callers pass `?? undefined`, not `??
+  null`.
+- A dedicated Supabase project ("The Queens", `zbzoymnunjwwgwgklaui`,
+  `ap-southeast-2`) now exists and all seven migrations (Phases 1–6 plus a
+  `p7_security_hardening` follow-up) are applied to it. The hardening
+  migration fixes two `get_advisors` findings surfaced on first apply:
+  `allocate_enquiry_reference()` was `SECURITY DEFINER` with no
+  authorization check of its own, reachable directly by any caller
+  (including `anon`) via PostgREST's default RPC exposure — it relied
+  entirely on its two callers' checks, which a direct call bypassed
+  outright, letting anyone burn/inflate a venue's enquiry-reference counter
+  by venue_id alone. Direct `EXECUTE` is now revoked from `public`/`anon`/
+  `authenticated`; both legitimate callers keep working since a
+  `SECURITY DEFINER` function's owner retains implicit execute rights.
+  The migration also adds the missing `set search_path = public` to four
+  functions that had been the only ones in the schema without it
+  (`set_updated_at`, `enforce_quote_immutability`,
+  `enforce_quote_line_items_immutability`, `add_business_days`). The
+  remaining `get_advisors` output (RLS-enabled-no-policy on
+  `venue_counters`/`public_enquiry_rate_limit`, and anon/authenticated
+  EXECUTE visibility on `auth_venue_ids`/`auth_venue_role`/the public-form
+  RPCs/the trigger functions) is intentional or self-gating by design — see
+  the inline comments at each definition — and was left as-is.
+- The RLS cross-venue denial suite (`tests/rls/*.test.ts`) is still only
+  ever run against a disposable Postgres instance (CI's `supabase start`),
+  never against the live project: the suite creates real auth users and
+  random-slug venues via the service-role client with no teardown, and
+  running it against "The Queens" would permanently seed a real venue's
+  production database with fake test data. Verifying against the live
+  project only ever meant applying the real migrations and regenerating
+  real types from it, both done above — not executing the test suite there.
+- `/api/export/[resource]/route.ts` (referenced in the architecture but not
+  wired up when Phase 6 shipped) now implements the `enquiries` resource,
+  reusing `listPipelineEnquiries` and the existing `toCsv()` helper — same
+  RLS-scoped query and filters the pipeline view uses, so an export can
+  never exceed what the view itself would show. Additional resources are
+  added the same way: wire in an existing list query, never a bespoke one.

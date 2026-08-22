@@ -45,10 +45,5 @@ jobs:
       - name: RLS cross-venue denial tests
         run: npm run test:rls
 
-      # lib/types/database.types.ts currently ships as a documented,
-      # hand-written placeholder (see DECISIONS.md) because Supabase
-      # project provisioning is blocked on an overdue invoice in the
-      # target organization. Once a real project exists and this file is
-      # regenerated from it, add a gate here comparing
-      # `supabase gen types typescript --local` output against the
-      # committed file so it can never silently drift again.
+      - name: Check lib/types/database.types.ts is not out of date
+        run: supabase gen types typescript --local > /tmp/generated.types.ts && node scripts/check-types-drift.mjs /tmp/generated.types.ts
