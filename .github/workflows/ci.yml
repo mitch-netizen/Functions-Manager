@@ -35,11 +35,18 @@ jobs:
 
       - name: Export local Supabase connection details for RLS tests
         run: |
+          # `supabase status -o env` quotes its values (e.g. API_URL="http://...")
+          # for shell `source`-ing. $GITHUB_ENV does no such quote-stripping, so
+          # writing that output straight through bakes the literal quote marks
+          # into the env var value, which supabase-js then rejects as an
+          # invalid URL. Strip a trailing \r (line endings from the CLI) and
+          # one layer of surrounding double quotes before appending.
           supabase status -o env \
             | sed -e 's/^API_URL=/SUPABASE_TEST_URL=/' \
                   -e 's/^ANON_KEY=/SUPABASE_TEST_ANON_KEY=/' \
                   -e 's/^SERVICE_ROLE_KEY=/SUPABASE_TEST_SERVICE_ROLE_KEY=/' \
             | grep -E '^SUPABASE_TEST_' \
+            | sed -E -e 's/\r$//' -e 's/^(SUPABASE_TEST_[A-Z_]+)="(.*)"$/\1=\2/' \
             >> "$GITHUB_ENV"
 
       - name: RLS cross-venue denial tests
