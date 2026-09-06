@@ -1,13 +1,13 @@
 // Generated from the live "The Queens" Supabase project
 // (zbzoymnunjwwgwgklaui, ap-southeast-2) via
-// `mcp__Supabase__generate_typescript_types` after applying every migration
-// through 20260822160000_p8_accommodation_and_opentable.sql. Never
-// hand-edited beyond the two narrow, documented deviations below —
-// regenerate wholesale after any future migration and reapply both:
+// `mcp__Supabase__generate_typescript_types` after applying
+// 20260906153500_p9_repoint_actor_fks_to_profiles.sql. Never hand-edited
+// beyond the two narrow, documented deviations below — regenerate
+// wholesale after any future migration and reapply both:
 //
 // 1. Two RPC Args blocks (create_public_enquiry, below and
 //    record_public_accommodation_booking) have several params widened to
-//    `| null` by hand. The generator (PostgREST 14.15) omits `| null` from
+//    `| null` by hand. The generator (PostgREST 14.5) omits `| null` from
 //    any function arg without a SQL-level default, even when the function
 //    body treats it as optional — Postgres function parameters are always
 //    callable with NULL regardless of declared type. Each widened block
@@ -30,7 +30,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -78,6 +78,13 @@ export type Database = {
           venue_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "accommodation_blocks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "accommodation_blocks_venue_id_event_id_fkey"
             columns: ["venue_id", "event_id"]
@@ -187,6 +194,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "activities_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "activities_enquiry_id_fkey"
             columns: ["enquiry_id"]
             isOneToOne: false
@@ -243,7 +257,15 @@ export type Database = {
           table_name?: string
           venue_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       automation_job_runs: {
         Row: {
@@ -344,6 +366,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "enquiries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enquiries_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "enquiries_venue_id_event_type_id_fkey"
             columns: ["venue_id", "event_type_id"]
             isOneToOne: false
@@ -398,6 +434,13 @@ export type Database = {
           venue_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "enquiry_status_history_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "enquiry_status_history_enquiry_id_fkey"
             columns: ["enquiry_id"]
@@ -685,6 +728,13 @@ export type Database = {
           venue_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "files_venue_id_enquiry_id_fkey"
             columns: ["venue_id", "enquiry_id"]
@@ -1051,6 +1101,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "quotes_venue_id_enquiry_id_fkey"
             columns: ["venue_id", "enquiry_id"]
             isOneToOne: false
@@ -1170,6 +1227,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["venue_id", "id"]
+          },
+          {
+            foreignKeyName: "tasks_assignee_user_id_fkey"
+            columns: ["assignee_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_enquiry_id_fkey"
@@ -1300,6 +1364,13 @@ export type Database = {
             referencedColumns: ["venue_id", "id"]
           },
           {
+            foreignKeyName: "venue_settings_default_owner_user_id_fkey"
+            columns: ["default_owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "venue_settings_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: true
@@ -1331,6 +1402,13 @@ export type Database = {
           venue_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "venue_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "venue_users_venue_id_fkey"
             columns: ["venue_id"]
@@ -1426,7 +1504,7 @@ export type Database = {
       }
       create_public_enquiry: {
         // Six of these params are declared nullable here even though the
-        // generator (as of PostgREST 14.15) omits `| null` for any function
+        // generator (as of PostgREST 14.5) omits `| null` for any function
         // arg without a SQL-level default — Postgres function parameters
         // are always callable with NULL regardless of declared type, and
         // create_public_enquiry()'s own body treats all six as optional
