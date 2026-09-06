@@ -10,6 +10,36 @@
 // regenerated."
 import { readFileSync } from "node:fs";
 
+// `supabase gen types typescript --local` includes the local stack's
+// `graphql_public` schema (from the pg_graphql extension) ahead of `public`
+// in its output, while the Management API path used to generate the
+// committed file does not emit it at all. Scoping every lookup to the
+// `public: { ... }` block specifically (rather than the first "Tables: {"
+// /"Functions: {" match anywhere in the file) keeps this comparison correct
+// regardless of schema ordering or which schemas either side includes.
+function publicSchemaBlock(source) {
+  // A plain indexOf("public: {") also matches inside "graphql_public: {"
+  // (the local stack's other schema), since that's a literal substring of
+  // it. \b requires a non-word character immediately before "public" — "_"
+  // counts as a word character, so it correctly skips graphql_public's key
+  // and lands only on the standalone `public` schema key.
+  const match = /\bpublic: \{/.exec(source);
+  if (!match) throw new Error(`could not find "public: {" block`);
+  const blockStart = match.index;
+
+  let depth = 0;
+  let i = source.indexOf("{", blockStart);
+  const blockContentStart = i + 1;
+  for (; i < source.length; i++) {
+    if (source[i] === "{") depth++;
+    else if (source[i] === "}") {
+      depth--;
+      if (depth === 0) break;
+    }
+  }
+  return source.slice(blockContentStart, i);
+}
+
 function namesUnderBlock(source, blockLabel) {
   const blockStart = source.indexOf(`${blockLabel}: {`);
   if (blockStart === -1) throw new Error(`could not find "${blockLabel}: {" block`);
@@ -42,14 +72,14 @@ function diffSets(a, b) {
 const generatedPath = process.argv[2];
 const committedPath = process.argv[3] ?? "lib/types/database.types.ts";
 
-const generated = readFileSync(generatedPath, "utf8");
-const committed = readFileSync(committedPath, "utf8");
+const generatedPublic = publicSchemaBlock(readFileSync(generatedPath, "utf8"));
+const committedPublic = publicSchemaBlock(readFileSync(committedPath, "utf8"));
 
 let failed = false;
 for (const block of ["Tables", "Functions", "Enums"]) {
   const { onlyInA: onlyInGenerated, onlyInB: onlyInCommitted } = diffSets(
-    namesUnderBlock(generated, block),
-    namesUnderBlock(committed, block)
+    namesUnderBlock(generatedPublic, block),
+    namesUnderBlock(committedPublic, block)
   );
   if (onlyInGenerated.length > 0 || onlyInCommitted.length > 0) {
     failed = true;
