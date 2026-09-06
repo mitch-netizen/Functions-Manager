@@ -18,9 +18,14 @@ import { readFileSync } from "node:fs";
 // /"Functions: {" match anywhere in the file) keeps this comparison correct
 // regardless of schema ordering or which schemas either side includes.
 function publicSchemaBlock(source) {
-  const label = "public: {";
-  const blockStart = source.indexOf(label);
-  if (blockStart === -1) throw new Error(`could not find "${label}" block`);
+  // A plain indexOf("public: {") also matches inside "graphql_public: {"
+  // (the local stack's other schema), since that's a literal substring of
+  // it. \b requires a non-word character immediately before "public" — "_"
+  // counts as a word character, so it correctly skips graphql_public's key
+  // and lands only on the standalone `public` schema key.
+  const match = /\bpublic: \{/.exec(source);
+  if (!match) throw new Error(`could not find "public: {" block`);
+  const blockStart = match.index;
 
   let depth = 0;
   let i = source.indexOf("{", blockStart);
