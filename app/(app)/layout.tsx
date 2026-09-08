@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Link href="/dashboard">Dashboard</Link>
           <Link href="/enquiries/new">New enquiry</Link>
           <Link href="/tasks">My tasks</Link>
-          {(ctx.activeRole === "admin" || ctx.activeRole === "manager") && <Link href="/admin/event-types">Admin</Link>}
+          {(ctx.activeRole === "admin" || ctx.activeRole === "functions_manager") && <Link href="/admin/event-types">Admin</Link>}
         </nav>
         <div className="flex items-center gap-3 text-sm">
           {showSwitcher ? (

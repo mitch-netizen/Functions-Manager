@@ -17,7 +17,7 @@ interface HoldWithEnquiryRow {
   starts_at: string;
   ends_at: string;
   enquiry_id: string;
-  enquiries: { contact_name: string; reference_number: string } | null;
+  enquiries: { reference_number: string; contacts: { name: string } | null } | null;
 }
 
 /** Active holds (any type) on a space overlapping a time range — used both for the pre-insert conflict-warning check and the calendar's conflict flag. */
@@ -25,7 +25,7 @@ export async function checkAvailability(venueId: string, spaceId: string, starts
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("holds")
-    .select("id, hold_type, starts_at, ends_at, enquiry_id, enquiries(contact_name, reference_number)")
+    .select("id, hold_type, starts_at, ends_at, enquiry_id, enquiries(reference_number, contacts(name))")
     .eq("venue_id", venueId)
     .eq("space_id", spaceId)
     .is("released_at", null)
@@ -41,7 +41,7 @@ export async function checkAvailability(venueId: string, spaceId: string, starts
     startsAt: row.starts_at,
     endsAt: row.ends_at,
     enquiryId: row.enquiry_id,
-    enquiryContactName: row.enquiries?.contact_name ?? "",
+    enquiryContactName: row.enquiries?.contacts?.name ?? "",
     enquiryReferenceNumber: row.enquiries?.reference_number ?? "",
   }));
 }
@@ -63,7 +63,7 @@ export async function listHoldsInRange(venueId: string, rangeStart: string, rang
   const supabase = await createClient();
   let query = supabase
     .from("holds")
-    .select("id, hold_type, starts_at, ends_at, enquiry_id, space_id, expires_at, enquiries(contact_name, reference_number), spaces(name)")
+    .select("id, hold_type, starts_at, ends_at, enquiry_id, space_id, expires_at, enquiries(reference_number, contacts(name)), spaces(name)")
     .eq("venue_id", venueId)
     .is("released_at", null)
     .lt("starts_at", rangeEnd)
@@ -80,7 +80,7 @@ export async function listHoldsInRange(venueId: string, rangeStart: string, rang
     startsAt: row.starts_at,
     endsAt: row.ends_at,
     enquiryId: row.enquiry_id,
-    enquiryContactName: row.enquiries?.contact_name ?? "",
+    enquiryContactName: row.enquiries?.contacts?.name ?? "",
     enquiryReferenceNumber: row.enquiries?.reference_number ?? "",
     spaceId: row.space_id,
     spaceName: row.spaces?.name ?? "",

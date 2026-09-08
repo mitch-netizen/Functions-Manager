@@ -1,15 +1,19 @@
 import Link from "next/link";
 import { requireSessionContext } from "@/lib/auth/session";
 import { listPipelineEnquiries } from "@/lib/domain/enquiries/queries";
-import type { EnquiryStatus } from "@/lib/types/database.types";
+import type { EnquiryStage } from "@/lib/types/database.types";
 
-const COLUMNS: { status: EnquiryStatus; label: string }[] = [
-  { status: "new", label: "New" },
-  { status: "qualifying", label: "Qualifying" },
-  { status: "proposal_sent", label: "Proposal sent" },
-  { status: "tentative", label: "Tentative" },
-  { status: "confirmed", label: "Confirmed" },
-  { status: "completed", label: "Completed" },
+const COLUMNS: { stage: EnquiryStage; label: string }[] = [
+  { stage: "new_enquiry", label: "New Enquiry" },
+  { stage: "active_enquiry", label: "Active Enquiry" },
+  { stage: "on_hold", label: "On Hold" },
+  { stage: "stale", label: "Stale" },
+  { stage: "blocked", label: "Blocked" },
+  { stage: "verbal_confirmation", label: "Verbal Confirmation" },
+  { stage: "confirmed", label: "Confirmed" },
+  { stage: "deposit_paid", label: "Deposit Paid" },
+  { stage: "paid_in_full", label: "Paid in Full" },
+  { stage: "completed", label: "Completed" },
 ];
 
 export default async function PipelinePage() {
@@ -19,11 +23,11 @@ export default async function PipelinePage() {
   return (
     <div>
       <h1 className="mb-4 text-lg font-semibold">Pipeline</h1>
-      <div className="grid grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-2 lg:grid-cols-6">
+      <div className="grid grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-10">
         {COLUMNS.map((col) => {
-          const items = enquiries.filter((e) => e.status === col.status);
+          const items = enquiries.filter((e) => e.stage === col.stage);
           return (
-            <div key={col.status} className="min-w-[220px] rounded-lg bg-neutral-100 p-2">
+            <div key={col.stage} className="min-w-[220px] rounded-lg bg-neutral-100 p-2">
               <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
                 {col.label} <span className="font-normal">({items.length})</span>
               </h2>
@@ -43,7 +47,7 @@ export default async function PipelinePage() {
                       {e.preferredDate ? ` · ${e.preferredDate}` : ""}
                     </div>
                     <div className="mt-1 flex items-center justify-between text-neutral-400">
-                      <span>{e.headcountEstimate ? `${e.headcountEstimate} guests` : ""}</span>
+                      <span>{e.paxMin ? `${e.paxMin}${e.paxMax && e.paxMax !== e.paxMin ? `-${e.paxMax}` : ""} guests` : ""}</span>
                       <span>{e.ownerName ?? ""}</span>
                     </div>
                   </Link>

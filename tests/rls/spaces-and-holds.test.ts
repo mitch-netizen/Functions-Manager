@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { adminClient, createTestVenue, createTestUser, type TestUser, type TestVenue } from "./helpers";
+import { adminClient, createTestVenue, createTestUser, createTestContact, type TestUser, type TestVenue } from "./helpers";
 
 describe("spaces: cross-venue denial and role restriction", () => {
   const admin = adminClient();
@@ -13,16 +13,16 @@ describe("spaces: cross-venue denial and role restriction", () => {
   beforeAll(async () => {
     venueA = await createTestVenue(admin, "rls-spaces-a");
     venueB = await createTestVenue(admin, "rls-spaces-b");
-    coordinatorA = await createTestUser(admin, venueA.venueId, "coordinator");
-    managerA = await createTestUser(admin, venueA.venueId, "manager");
-    userB = await createTestUser(admin, venueB.venueId, "coordinator");
+    coordinatorA = await createTestUser(admin, venueA.venueId, "duty_manager");
+    managerA = await createTestUser(admin, venueA.venueId, "functions_manager");
+    userB = await createTestUser(admin, venueB.venueId, "duty_manager");
 
     const { data, error } = await managerA.client.from("spaces").insert({ venue_id: venueA.venueId, name: "Main Hall" }).select("id").single();
     if (error || !data) throw error;
     spaceAId = data.id;
   });
 
-  it("blocks a coordinator from creating a space (admin/manager only)", async () => {
+  it("blocks a duty manager from creating a space (admin/functions_manager only)", async () => {
     const { error } = await coordinatorA.client.from("spaces").insert({ venue_id: venueA.venueId, name: "Should fail" });
     expect(error).not.toBeNull();
   });
@@ -49,21 +49,21 @@ describe("holds: confirmed-vs-confirmed overlap is rejected, tentative is not", 
 
   beforeAll(async () => {
     venue = await createTestVenue(admin, "rls-holds");
-    coordinator = await createTestUser(admin, venue.venueId, "coordinator");
+    coordinator = await createTestUser(admin, venue.venueId, "duty_manager");
 
     const { data: space } = await admin.from("spaces").insert({ venue_id: venue.venueId, name: "Ballroom" }).select("id").single();
     spaceId = space!.id;
 
     for (const label of ["one", "two"] as const) {
       const { data: ref } = await coordinator.client.rpc("next_enquiry_reference", { p_venue_id: venue.venueId });
+      const contactId = await createTestContact(coordinator.client, venue.venueId, `Contact ${label}`);
       const { data: enquiry } = await coordinator.client
         .from("enquiries")
         .insert({
           venue_id: venue.venueId,
           reference_number: ref as string,
           source: "phone",
-          contact_name: `Contact ${label}`,
-          contact_phone: "0000000000",
+          contact_id: contactId,
         })
         .select("id")
         .single();

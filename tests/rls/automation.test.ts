@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { adminClient, createTestVenue, createTestUser, type TestUser, type TestVenue } from "./helpers";
+import { adminClient, createTestVenue, createTestUser, createTestContact, type TestUser, type TestVenue } from "./helpers";
 
 describe("automation_job_runs: idempotency ledger", () => {
   const admin = adminClient();
@@ -9,12 +9,13 @@ describe("automation_job_runs: idempotency ledger", () => {
 
   beforeAll(async () => {
     venue = await createTestVenue(admin, "rls-automation");
-    coordinator = await createTestUser(admin, venue.venueId, "coordinator");
+    coordinator = await createTestUser(admin, venue.venueId, "duty_manager");
 
     const { data: ref } = await coordinator.client.rpc("next_enquiry_reference", { p_venue_id: venue.venueId });
+    const contactId = await createTestContact(coordinator.client, venue.venueId, "Automation Test");
     const { data: enquiry } = await coordinator.client
       .from("enquiries")
-      .insert({ venue_id: venue.venueId, reference_number: ref as string, source: "phone", contact_name: "Automation Test", contact_phone: "0000000000" })
+      .insert({ venue_id: venue.venueId, reference_number: ref as string, source: "phone", contact_id: contactId })
       .select("id")
       .single();
     enquiryId = enquiry!.id;

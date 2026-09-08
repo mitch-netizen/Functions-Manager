@@ -1,10 +1,10 @@
 import { startOfMonth } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
-import type { EnquiryStatus } from "@/lib/types/database.types";
+import type { EnquiryStage } from "@/lib/types/database.types";
 
 export interface DashboardStats {
   enquiriesReceivedThisPeriod: number;
-  conversionRate: number; // confirmed+completed / (received this period), 0-1
+  conversionRate: number; // confirmed-family+completed / (received this period), 0-1
   confirmedForwardRevenueByMonth: { month: string; total: number }[];
   averageEventValue: number | null;
   pipelineValueWeighted: number;
@@ -13,21 +13,36 @@ export interface DashboardStats {
 }
 
 // A judgment call (see DECISIONS.md): the brief asks for "pipeline value
-// weighted by status" without specifying weights. These approximate how
+// weighted by stage" without specifying weights. These approximate how
 // likely an enquiry at each stage is to convert, applied to its latest
 // quote total (or budget_indication if no quote exists yet).
-const STATUS_WEIGHTS: Record<EnquiryStatus, number> = {
-  new: 0.1,
-  qualifying: 0.25,
-  proposal_sent: 0.5,
-  tentative: 0.75,
-  confirmed: 1,
+const STAGE_WEIGHTS: Record<EnquiryStage, number> = {
+  new_enquiry: 0.1,
+  active_enquiry: 0.25,
+  on_hold: 0.3,
+  stale: 0.05,
+  blocked: 0.05,
+  verbal_confirmation: 0.6,
+  confirmed: 0.85,
+  deposit_paid: 0.95,
+  paid_in_full: 1,
   completed: 1,
   lost: 0,
   cancelled: 0,
 };
 
-const OPEN_STATUSES: EnquiryStatus[] = ["new", "qualifying", "proposal_sent", "tentative", "confirmed"];
+const CONFIRMED_FAMILY_STAGES: EnquiryStage[] = ["confirmed", "deposit_paid", "paid_in_full", "completed"];
+const OPEN_STAGES: EnquiryStage[] = [
+  "new_enquiry",
+  "active_enquiry",
+  "on_hold",
+  "stale",
+  "blocked",
+  "verbal_confirmation",
+  "confirmed",
+  "deposit_paid",
+  "paid_in_full",
+];
 
 export async function getDashboardStats(venueId: string): Promise<DashboardStats> {
   const supabase = await createClient();
@@ -44,7 +59,7 @@ export async function getDashboardStats(venueId: string): Promise<DashboardStats
     .select("id", { count: "exact", head: true })
     .eq("venue_id", venueId)
     .gte("created_at", periodStart)
-    .in("status", ["confirmed", "completed"]);
+    .in("stage", CONFIRMED_FAMILY_STAGES);
 
   const conversionRate =
     enquiriesReceivedThisPeriod && enquiriesReceivedThisPeriod > 0
@@ -58,9 +73,9 @@ export async function getDashboardStats(venueId: string): Promise<DashboardStats
 
   const { data: openEnquiries } = await supabase
     .from("enquiries")
-    .select("id, status, budget_indication")
+    .select("id, stage, budget_indication")
     .eq("venue_id", venueId)
-    .in("status", OPEN_STATUSES);
+    .in("stage", OPEN_STAGES);
 
   const { data: latestQuotesByEnquiry } = await supabase
     .from("quotes")
@@ -75,7 +90,7 @@ export async function getDashboardStats(venueId: string): Promise<DashboardStats
   let pipelineValueWeighted = 0;
   for (const enquiry of openEnquiries ?? []) {
     const value = latestQuoteTotal.get(enquiry.id) ?? enquiry.budget_indication ?? 0;
-    pipelineValueWeighted += value * STATUS_WEIGHTS[enquiry.status];
+    pipelineValueWeighted += value * STAGE_WEIGHTS[enquiry.stage];
   }
 
   const { data: confirmedEvents } = await supabase
@@ -103,7 +118,7 @@ export async function getDashboardStats(venueId: string): Promise<DashboardStats
     .from("enquiries")
     .select("id, updated_at")
     .eq("venue_id", venueId)
-    .in("status", OPEN_STATUSES);
+    .in("stage", OPEN_STAGES);
   const { data: settings } = await supabase.from("venue_settings").select("stale_enquiry_days").eq("venue_id", venueId).single();
   const staleDays = settings?.stale_enquiry_days ?? 7;
   const staleThreshold = Date.now() - staleDays * 24 * 60 * 60 * 1000;

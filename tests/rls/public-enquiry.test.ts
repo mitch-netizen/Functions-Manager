@@ -45,9 +45,9 @@ describe("public enquiry form (Phase 6)", () => {
     const result = data?.[0];
     expect(result?.reference_number).toBeTruthy();
 
-    const { data: enquiry } = await admin.from("enquiries").select("source, status").eq("id", result!.enquiry_id).single();
+    const { data: enquiry } = await admin.from("enquiries").select("source, stage").eq("id", result!.enquiry_id).single();
     expect(enquiry?.source).toBe("website");
-    expect(enquiry?.status).toBe("new");
+    expect(enquiry?.stage).toBe("new_enquiry");
 
     const { data: task } = await admin.from("tasks").select("id").eq("enquiry_id", result!.enquiry_id).single();
     expect(task).not.toBeNull();
@@ -69,8 +69,8 @@ describe("public enquiry form (Phase 6)", () => {
     expect(error).toBeNull();
     expect(data ?? []).toEqual([]);
 
-    const { data: enquiry } = await admin.from("enquiries").select("id").eq("venue_id", venue.venueId).eq("contact_name", "Bot Visitor");
-    expect(enquiry ?? []).toEqual([]);
+    const { data: contact } = await admin.from("contacts").select("id").eq("venue_id", venue.venueId).eq("name", "Bot Visitor");
+    expect(contact ?? []).toEqual([]);
   });
 
   it("rejects a submission missing contact name", async () => {

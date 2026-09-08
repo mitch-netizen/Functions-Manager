@@ -49,20 +49,23 @@ export default async function EnquiryDetailPage({ params }: { params: Promise<{ 
             </div>
           </div>
           <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-neutral-700">
-            <Detail label="Phone" value={enquiry.contactPhone} />
+            <Detail label="Phone" value={enquiry.contactPhone ?? "—"} />
             <Detail label="Email" value={enquiry.contactEmail ?? "—"} />
-            <Detail label="Organisation" value={enquiry.organisation ?? "—"} />
+            <Detail label="Organisation" value={enquiry.organisationName ?? "—"} />
             <Detail label="Event type" value={enquiry.eventTypeName ?? "—"} />
             <Detail label="Space preference" value={enquiry.spacePreferenceName ?? "—"} />
             <Detail label="Preferred date" value={enquiry.preferredDate ?? "—"} />
-            <Detail label="Headcount" value={enquiry.headcountEstimate ? String(enquiry.headcountEstimate) : "—"} />
+            <Detail
+              label="Pax"
+              value={enquiry.paxMin ? `${enquiry.paxMin}${enquiry.paxMax && enquiry.paxMax !== enquiry.paxMin ? `-${enquiry.paxMax}` : ""}` : "—"}
+            />
             <Detail label="Budget" value={enquiry.budgetIndication ? `$${enquiry.budgetIndication}` : "—"} />
             <Detail label="Source" value={enquiry.source} />
           </dl>
           {enquiry.briefDescription && <p className="mt-3 text-sm text-neutral-600">{enquiry.briefDescription}</p>}
         </div>
 
-        <StatusControl enquiryId={enquiry.id} currentStatus={enquiry.status} lostReasons={lostReasons} spaces={spaces} />
+        <StatusControl enquiryId={enquiry.id} currentStage={enquiry.stage} lostReasons={lostReasons} spaces={spaces} />
 
         <div>
           <h2 className="mb-2 text-sm font-semibold text-neutral-700">Activity</h2>

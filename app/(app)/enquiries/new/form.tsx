@@ -16,6 +16,8 @@ export function NewEnquiryForm({ eventTypes, spaces }: { eventTypes: EventTypeRo
     setPending(true);
     setError(null);
 
+    const pax = formData.get("pax") ? Number(formData.get("pax")) : undefined;
+
     const result = await createEnquiry({
       contactName: String(formData.get("contactName") ?? ""),
       contactPhone: String(formData.get("contactPhone") ?? ""),
@@ -24,8 +26,8 @@ export function NewEnquiryForm({ eventTypes, spaces }: { eventTypes: EventTypeRo
       eventTypeId: String(formData.get("eventTypeId") ?? "") || undefined,
       spacePreferenceId: String(formData.get("spacePreferenceId") ?? "") || undefined,
       preferredDate: String(formData.get("preferredDate") ?? ""),
-      dateFlexible: formData.get("dateFlexible") === "on",
-      headcountEstimate: formData.get("headcountEstimate") ? Number(formData.get("headcountEstimate")) : undefined,
+      paxMin: pax,
+      paxMax: pax,
       budgetIndication: formData.get("budgetIndication") ? Number(formData.get("budgetIndication")) : undefined,
       briefDescription: String(formData.get("briefDescription") ?? ""),
       source: (String(formData.get("source") ?? "phone") as "phone" | "email" | "walk_in" | "website" | "social" | "referral" | "repeat"),
@@ -47,7 +49,7 @@ export function NewEnquiryForm({ eventTypes, spaces }: { eventTypes: EventTypeRo
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Preferred date" name="preferredDate" type="date" />
-        <Field label="Headcount (est.)" name="headcountEstimate" type="number" min={1} />
+        <Field label="Pax (est.)" name="pax" type="number" min={1} />
       </div>
       <div>
         <label className="block text-sm font-medium text-neutral-700" htmlFor="eventTypeId">
@@ -99,9 +101,6 @@ export function NewEnquiryForm({ eventTypes, spaces }: { eventTypes: EventTypeRo
               ))}
             </select>
           </div>
-          <label className="flex items-center gap-2 text-sm text-neutral-700">
-            <input type="checkbox" name="dateFlexible" /> Date is flexible
-          </label>
           <div>
             <label className="block text-sm font-medium text-neutral-700" htmlFor="briefDescription">
               Notes

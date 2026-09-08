@@ -43,9 +43,11 @@ export async function confirmEnquiry(input: z.infer<typeof confirmEnquirySchema>
 
   const { data: enquiry } = await supabase
     .from("enquiries")
-    .select("contact_name, contact_email, reference_number")
+    .select("reference_number, contacts(name, email)")
     .eq("id", parsed.data.enquiryId)
     .single();
+  const contactName = enquiry?.contacts?.name ?? "this event";
+  const contactEmail = enquiry?.contacts?.email ?? null;
 
   const { data: settings } = await supabase
     .from("venue_settings")
@@ -56,7 +58,7 @@ export async function confirmEnquiry(input: z.infer<typeof confirmEnquirySchema>
   await supabase.from("tasks").insert({
     venue_id: ctx.activeVenueId,
     event_id: event.id,
-    title: `Confirm final details for ${enquiry?.contact_name ?? "this event"}`,
+    title: `Confirm final details for ${contactName}`,
     due_date: format(
       addDays(new Date(parsed.data.confirmedStartsAt), -(settings?.final_details_days_before_event ?? 14)),
       "yyyy-MM-dd"
@@ -71,7 +73,7 @@ export async function confirmEnquiry(input: z.infer<typeof confirmEnquirySchema>
   await supabase.from("tasks").insert({
     venue_id: ctx.activeVenueId,
     event_id: event.id,
-    title: `Block tables in OpenTable for ${enquiry?.contact_name ?? "this event"}'s function (${format(
+    title: `Block tables in OpenTable for ${contactName}'s function (${format(
       new Date(parsed.data.confirmedStartsAt),
       "d MMM yyyy, h:mma"
     )} – ${format(new Date(parsed.data.confirmedEndsAt), "h:mma")})`,
@@ -80,18 +82,18 @@ export async function confirmEnquiry(input: z.infer<typeof confirmEnquirySchema>
     source: "auto_opentable_block",
   });
 
-  if (enquiry?.contact_email) {
+  if (contactEmail) {
     try {
       const { data: venue } = await supabase.from("venues").select("name, brand_config").eq("id", ctx.activeVenueId).single();
       if (venue) {
         const brand = resolveBrand(venue.name, venue.brand_config);
         await getEmailSender().send({
-          to: enquiry.contact_email,
+          to: contactEmail,
           subject: `Your event at ${venue.name} is confirmed`,
           react: EventConfirmedEmail({
             brand,
-            contactName: enquiry.contact_name,
-            referenceNumber: enquiry.reference_number,
+            contactName,
+            referenceNumber: enquiry?.reference_number ?? "",
             confirmedDate: format(new Date(parsed.data.confirmedStartsAt), "d MMMM yyyy"),
           }),
           tags: { venueId: ctx.activeVenueId, enquiryId: parsed.data.enquiryId },
@@ -209,7 +211,7 @@ export async function completeEvent(input: z.infer<typeof completeEventSchema>):
 
   const { error: statusError } = await supabase.rpc("update_enquiry_status", {
     p_enquiry_id: parsed.data.enquiryId,
-    p_to_status: "completed",
+    p_to_stage: "completed",
   });
   if (statusError) return { ok: false, error: statusError.message };
 
