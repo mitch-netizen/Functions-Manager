@@ -236,3 +236,18 @@ rather than building for multiple cases.
   match a real RMS room type code, not a locally-synced lookup table — no
   "list room types" RMS call is wired up yet. Worth revisiting if room-type
   sync becomes wanted.
+- **`scripts/check-types-drift.mjs` ignores any table whose name starts
+  with `rev_`.** The live "The Queens" Supabase project (`zbzoymnunjwwgwgklaui`)
+  also hosts a separate, unrelated revenue-tracking app the user runs
+  against the same project — its `rev_daily_actuals`, `rev_weeks`, and
+  similar tables were never created by any migration in this repo and
+  never will be. The committed `database.types.ts` is generated from that
+  live project, so it naturally includes them, but CI's `check-types-drift`
+  job builds a fresh local Postgres instance purely from this repo's own
+  tracked migrations, which never define them — a structural, permanent
+  mismatch with no fix on this repo's side other than ignoring the prefix.
+  This is a third documented deviation alongside the two already called
+  out in the file's own header (the widened RPC `| null` args and the
+  appended Enum aliases), except it lives in the comparison script rather
+  than the types file itself, since it's about what the script should
+  compare, not about the generated content being hand-edited.
