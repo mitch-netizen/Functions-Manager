@@ -56,9 +56,9 @@ export async function runStaleEnquiriesRule(admin: AdminClient, venueId: string,
 
   const { data: candidates } = await admin
     .from("enquiries")
-    .select("id, contact_name, owner_user_id, updated_at")
+    .select("id, owner_user_id, updated_at, contacts(name)")
     .eq("venue_id", venueId)
-    .not("status", "in", "(completed,lost,cancelled)")
+    .not("stage", "in", "(completed,lost,cancelled)")
     .lt("updated_at", threshold);
 
   let fired = 0;
@@ -81,7 +81,7 @@ export async function runStaleEnquiriesRule(admin: AdminClient, venueId: string,
     await createTask(admin, {
       venueId,
       enquiryId: enquiry.id,
-      title: `No activity on ${enquiry.contact_name}'s enquiry for ${settings.stale_enquiry_days}+ days`,
+      title: `No activity on ${enquiry.contacts?.name ?? "an enquiry"} for ${settings.stale_enquiry_days}+ days`,
       dueDate: format(now, "yyyy-MM-dd"),
       assigneeUserId: enquiry.owner_user_id ?? settings.default_owner_user_id,
       source: "auto_stale_enquiry",
@@ -97,14 +97,14 @@ export async function runHoldExpiryWarningRule(admin: AdminClient, venueId: stri
 
   const { data: candidates } = await admin
     .from("holds")
-    .select("id, enquiry_id, expires_at, enquiries(contact_name, owner_user_id)")
+    .select("id, enquiry_id, expires_at, enquiries(owner_user_id, contacts(name))")
     .eq("venue_id", venueId)
     .eq("hold_type", "tentative")
     .is("released_at", null)
     .not("expires_at", "is", null)
     .lte("expires_at", warningCutoff)
     .gt("expires_at", now.toISOString())
-    .returns<{ id: string; enquiry_id: string; expires_at: string; enquiries: { contact_name: string; owner_user_id: string | null } | null }[]>();
+    .returns<{ id: string; enquiry_id: string; expires_at: string; enquiries: { owner_user_id: string | null; contacts: { name: string } | null } | null }[]>();
 
   let fired = 0;
   for (const hold of candidates ?? []) {
@@ -114,7 +114,7 @@ export async function runHoldExpiryWarningRule(admin: AdminClient, venueId: stri
     await createTask(admin, {
       venueId,
       enquiryId: hold.enquiry_id,
-      title: `Tentative hold for ${hold.enquiries?.contact_name ?? "an enquiry"} expires soon`,
+      title: `Tentative hold for ${hold.enquiries?.contacts?.name ?? "an enquiry"} expires soon`,
       dueDate: format(now, "yyyy-MM-dd"),
       assigneeUserId: hold.enquiries?.owner_user_id ?? settings.default_owner_user_id,
       source: "auto_hold_expiry_warning",
@@ -128,13 +128,13 @@ export async function runHoldExpiryWarningRule(admin: AdminClient, venueId: stri
 export async function runHoldExpiredRule(admin: AdminClient, venueId: string, settings: VenueSettingsRow, now: Date): Promise<number> {
   const { data: candidates } = await admin
     .from("holds")
-    .select("id, enquiry_id, enquiries(contact_name, owner_user_id)")
+    .select("id, enquiry_id, enquiries(owner_user_id, contacts(name))")
     .eq("venue_id", venueId)
     .eq("hold_type", "tentative")
     .is("released_at", null)
     .not("expires_at", "is", null)
     .lte("expires_at", now.toISOString())
-    .returns<{ id: string; enquiry_id: string; enquiries: { contact_name: string; owner_user_id: string | null } | null }[]>();
+    .returns<{ id: string; enquiry_id: string; enquiries: { owner_user_id: string | null; contacts: { name: string } | null } | null }[]>();
 
   let fired = 0;
   for (const hold of candidates ?? []) {
@@ -151,7 +151,7 @@ export async function runHoldExpiredRule(admin: AdminClient, venueId: string, se
     await createTask(admin, {
       venueId,
       enquiryId: hold.enquiry_id,
-      title: `Tentative hold expired for ${hold.enquiries?.contact_name ?? "an enquiry"} — space released`,
+      title: `Tentative hold expired for ${hold.enquiries?.contacts?.name ?? "an enquiry"} — space released`,
       dueDate: format(now, "yyyy-MM-dd"),
       assigneeUserId: hold.enquiries?.owner_user_id ?? settings.default_owner_user_id,
       source: "auto_hold_expired",
@@ -169,12 +169,12 @@ export async function runEventFinalNumbersRule(admin: AdminClient, venueId: stri
 
   const { data: candidates } = await admin
     .from("events")
-    .select("id, enquiry_id, enquiries(contact_name, owner_user_id)")
+    .select("id, enquiry_id, enquiries(owner_user_id, contacts(name))")
     .eq("venue_id", venueId)
     .is("completed_at", null)
     .gte("confirmed_starts_at", dayStart)
     .lt("confirmed_starts_at", dayEnd)
-    .returns<{ id: string; enquiry_id: string; enquiries: { contact_name: string; owner_user_id: string | null } | null }[]>();
+    .returns<{ id: string; enquiry_id: string; enquiries: { owner_user_id: string | null; contacts: { name: string } | null } | null }[]>();
 
   let fired = 0;
   for (const event of candidates ?? []) {
@@ -184,7 +184,7 @@ export async function runEventFinalNumbersRule(admin: AdminClient, venueId: stri
     await createTask(admin, {
       venueId,
       eventId: event.id,
-      title: `Confirm final numbers and dietaries for ${event.enquiries?.contact_name ?? "this event"}`,
+      title: `Confirm final numbers and dietaries for ${event.enquiries?.contacts?.name ?? "this event"}`,
       dueDate: format(now, "yyyy-MM-dd"),
       assigneeUserId: event.enquiries?.owner_user_id ?? settings.default_owner_user_id,
       source: "auto_event_final_numbers",
@@ -198,11 +198,11 @@ export async function runEventFinalNumbersRule(admin: AdminClient, venueId: stri
 export async function runPostEventPromptRule(admin: AdminClient, venueId: string, settings: VenueSettingsRow, now: Date): Promise<number> {
   const { data: candidates } = await admin
     .from("events")
-    .select("id, enquiry_id, confirmed_ends_at, enquiries(contact_name, owner_user_id)")
+    .select("id, enquiry_id, confirmed_ends_at, enquiries(owner_user_id, contacts(name))")
     .eq("venue_id", venueId)
     .is("completed_at", null)
     .lt("confirmed_ends_at", now.toISOString())
-    .returns<{ id: string; enquiry_id: string; confirmed_ends_at: string; enquiries: { contact_name: string; owner_user_id: string | null } | null }[]>();
+    .returns<{ id: string; enquiry_id: string; confirmed_ends_at: string; enquiries: { owner_user_id: string | null; contacts: { name: string } | null } | null }[]>();
 
   let fired = 0;
   for (const event of candidates ?? []) {
@@ -212,7 +212,7 @@ export async function runPostEventPromptRule(admin: AdminClient, venueId: string
     await createTask(admin, {
       venueId,
       eventId: event.id,
-      title: `Record actual headcount and spend for ${event.enquiries?.contact_name ?? "this event"}`,
+      title: `Record actual headcount and spend for ${event.enquiries?.contacts?.name ?? "this event"}`,
       dueDate: format(now, "yyyy-MM-dd"),
       assigneeUserId: event.enquiries?.owner_user_id ?? settings.default_owner_user_id,
       source: "auto_post_event_prompt",

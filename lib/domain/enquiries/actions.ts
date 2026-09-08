@@ -9,7 +9,7 @@ import { getEmailSender } from "@/lib/email/resend-sender";
 import { resolveBrand } from "@/lib/email/templates/brand";
 import { EnquiryAckEmail } from "@/lib/email/templates/enquiry-ack";
 import { OwnerNotificationEmail } from "@/lib/email/templates/owner-notification";
-import type { EnquirySource, EnquiryStatus } from "@/lib/types/database.types";
+import type { EnquirySource, EnquiryStage } from "@/lib/types/database.types";
 import type { ActionResult } from "@/lib/domain/shared";
 
 const createEnquirySchema = z.object({
@@ -20,8 +20,8 @@ const createEnquirySchema = z.object({
   eventTypeId: z.string().uuid().optional(),
   spacePreferenceId: z.string().uuid().optional(),
   preferredDate: z.string().optional(), // yyyy-mm-dd
-  dateFlexible: z.boolean().optional(),
-  headcountEstimate: z.coerce.number().int().positive().optional(),
+  paxMin: z.coerce.number().int().positive().optional(),
+  paxMax: z.coerce.number().int().positive().optional(),
   budgetIndication: z.coerce.number().nonnegative().optional(),
   briefDescription: z.string().optional(),
   source: z.enum(["phone", "email", "walk_in", "website", "social", "referral", "repeat"]),
@@ -56,21 +56,42 @@ export async function createEnquiry(input: CreateEnquiryInput): Promise<ActionRe
 
   const ownerUserId = parsed.data.ownerUserId ?? settings?.default_owner_user_id ?? ctx.userId;
 
+  const { data: contact, error: contactError } = await supabase
+    .from("contacts")
+    .insert({
+      venue_id: ctx.activeVenueId,
+      name: parsed.data.contactName,
+      phone: parsed.data.contactPhone,
+      email: parsed.data.contactEmail || null,
+    })
+    .select("id")
+    .single();
+  if (contactError || !contact) return { ok: false, error: contactError?.message ?? "failed to create contact" };
+
+  let organisationId: string | null = null;
+  if (parsed.data.organisation) {
+    const { data: organisation, error: organisationError } = await supabase
+      .from("organisations")
+      .insert({ venue_id: ctx.activeVenueId, name: parsed.data.organisation })
+      .select("id")
+      .single();
+    if (organisationError || !organisation) return { ok: false, error: organisationError?.message ?? "failed to create organisation" };
+    organisationId = organisation.id;
+  }
+
   const { data: enquiry, error: insertError } = await supabase
     .from("enquiries")
     .insert({
       venue_id: ctx.activeVenueId,
       reference_number: referenceNumber as string,
       source: parsed.data.source as EnquirySource,
-      contact_name: parsed.data.contactName,
-      contact_phone: parsed.data.contactPhone,
-      contact_email: parsed.data.contactEmail || null,
-      organisation: parsed.data.organisation || null,
+      contact_id: contact.id,
+      organisation_id: organisationId,
       event_type_id: parsed.data.eventTypeId ?? null,
       space_preference_id: parsed.data.spacePreferenceId ?? null,
       preferred_date: parsed.data.preferredDate || null,
-      date_flexible: parsed.data.dateFlexible ?? false,
-      headcount_estimate: parsed.data.headcountEstimate ?? null,
+      pax_min: parsed.data.paxMin ?? null,
+      pax_max: parsed.data.paxMax ?? null,
       budget_indication: parsed.data.budgetIndication ?? null,
       brief_description: parsed.data.briefDescription || null,
       owner_user_id: ownerUserId,
@@ -169,20 +190,33 @@ async function sendCreationEmails(params: {
   }
 }
 
-const updateStatusSchema = z.object({
+const updateStageSchema = z.object({
   enquiryId: z.string().uuid(),
-  toStatus: z.enum(["new", "qualifying", "proposal_sent", "tentative", "confirmed", "completed", "lost", "cancelled"]),
+  toStage: z.enum([
+    "new_enquiry",
+    "active_enquiry",
+    "on_hold",
+    "stale",
+    "blocked",
+    "verbal_confirmation",
+    "confirmed",
+    "deposit_paid",
+    "paid_in_full",
+    "completed",
+    "cancelled",
+    "lost",
+  ]),
   reasonId: z.string().uuid().optional(),
 });
 
-export async function updateEnquiryStatus(input: z.infer<typeof updateStatusSchema>): Promise<ActionResult<null>> {
-  const parsed = updateStatusSchema.safeParse(input);
+export async function updateEnquiryStatus(input: z.infer<typeof updateStageSchema>): Promise<ActionResult<null>> {
+  const parsed = updateStageSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues.map((i) => i.message).join(", ") };
 
   const supabase = await createClient();
   const { error, data } = await supabase.rpc("update_enquiry_status", {
     p_enquiry_id: parsed.data.enquiryId,
-    p_to_status: parsed.data.toStatus as EnquiryStatus,
+    p_to_stage: parsed.data.toStage as EnquiryStage,
     p_reason_id: parsed.data.reasonId ?? undefined,
   });
   if (error) return { ok: false, error: error.message };
@@ -191,7 +225,7 @@ export async function updateEnquiryStatus(input: z.infer<typeof updateStatusSche
     venue_id: data.venue_id,
     enquiry_id: parsed.data.enquiryId,
     type: "status_change",
-    body: `Status changed to ${parsed.data.toStatus}.`,
+    body: `Stage changed to ${parsed.data.toStage}.`,
   });
 
   revalidatePath("/pipeline");

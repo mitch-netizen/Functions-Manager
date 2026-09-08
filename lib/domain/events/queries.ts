@@ -42,11 +42,11 @@ interface EventRow {
   actual_headcount: number | null;
   actual_spend: number | null;
   completed_at: string | null;
-  enquiries: { contact_name: string; reference_number: string } | null;
+  enquiries: { reference_number: string; contacts: { name: string } | null } | null;
 }
 
 const EVENT_SELECT =
-  "id, enquiry_id, final_headcount, confirmed_starts_at, confirmed_ends_at, bump_in_at, bump_out_at, room_setup, av_requirements, special_instructions, run_sheet_notes, actual_headcount, actual_spend, completed_at, enquiries(contact_name, reference_number)";
+  "id, enquiry_id, final_headcount, confirmed_starts_at, confirmed_ends_at, bump_in_at, bump_out_at, room_setup, av_requirements, special_instructions, run_sheet_notes, actual_headcount, actual_spend, completed_at, enquiries(reference_number, contacts(name))";
 
 async function hydrateEvent(event: EventRow): Promise<EventDetail> {
   const supabase = await createClient();
@@ -58,7 +58,7 @@ async function hydrateEvent(event: EventRow): Promise<EventDetail> {
   return {
     id: event.id,
     enquiryId: event.enquiry_id,
-    contactName: event.enquiries?.contact_name ?? "",
+    contactName: event.enquiries?.contacts?.name ?? "",
     referenceNumber: event.enquiries?.reference_number ?? "",
     finalHeadcount: event.final_headcount,
     confirmedStartsAt: event.confirmed_starts_at,

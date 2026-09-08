@@ -36,7 +36,7 @@ export async function listVenueUsers(venueId: string): Promise<VenueUserRow[]> {
 
 const inviteSchema = z.object({
   email: z.string().email(),
-  role: z.enum(["admin", "manager", "coordinator", "viewer"]),
+  role: z.enum(["admin", "functions_manager", "duty_manager", "executive_readonly", "kitchen"]),
 });
 
 /**

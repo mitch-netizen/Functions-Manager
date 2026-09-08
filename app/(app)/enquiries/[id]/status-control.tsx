@@ -4,16 +4,20 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateEnquiryStatus } from "@/lib/domain/enquiries/actions";
 import { confirmEnquiry } from "@/lib/domain/events/actions";
-import type { EnquiryStatus } from "@/lib/types/database.types";
+import type { EnquiryStage } from "@/lib/types/database.types";
 import type { LostReasonRow } from "@/lib/domain/admin/lost-reasons";
 import type { SpaceRow } from "@/lib/domain/admin/spaces";
 
-const STATUSES: { value: EnquiryStatus; label: string }[] = [
-  { value: "new", label: "New" },
-  { value: "qualifying", label: "Qualifying" },
-  { value: "proposal_sent", label: "Proposal sent" },
-  { value: "tentative", label: "Tentative" },
+const STAGES: { value: EnquiryStage; label: string }[] = [
+  { value: "new_enquiry", label: "New Enquiry" },
+  { value: "active_enquiry", label: "Active Enquiry" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "stale", label: "Stale" },
+  { value: "blocked", label: "Blocked" },
+  { value: "verbal_confirmation", label: "Verbal Confirmation" },
   { value: "confirmed", label: "Confirmed" },
+  { value: "deposit_paid", label: "Deposit Paid" },
+  { value: "paid_in_full", label: "Paid in Full" },
   { value: "completed", label: "Completed" },
   { value: "lost", label: "Lost" },
   { value: "cancelled", label: "Cancelled" },
@@ -21,27 +25,27 @@ const STATUSES: { value: EnquiryStatus; label: string }[] = [
 
 export function StatusControl({
   enquiryId,
-  currentStatus,
+  currentStage,
   lostReasons,
   spaces,
 }: {
   enquiryId: string;
-  currentStatus: EnquiryStatus;
+  currentStage: EnquiryStage;
   lostReasons: LostReasonRow[];
   spaces: SpaceRow[];
 }) {
   const router = useRouter();
-  const [nextStatus, setNextStatus] = useState<EnquiryStatus>(currentStatus);
+  const [nextStage, setNextStage] = useState<EnquiryStage>(currentStage);
   const [reasonId, setReasonId] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const needsReason = nextStatus === "lost" || nextStatus === "cancelled";
-  const needsConfirmationDetails = nextStatus === "confirmed" && currentStatus !== "confirmed";
+  const needsReason = nextStage === "lost" || nextStage === "cancelled";
+  const needsConfirmationDetails = nextStage === "confirmed" && currentStage !== "confirmed";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (nextStatus === currentStatus) return;
+    if (nextStage === currentStage) return;
     if (needsReason && !reasonId) {
       setError("A reason is required.");
       return;
@@ -79,7 +83,7 @@ export function StatusControl({
       return;
     }
 
-    const result = await updateEnquiryStatus({ enquiryId, toStatus: nextStatus, reasonId: reasonId || undefined });
+    const result = await updateEnquiryStatus({ enquiryId, toStage: nextStage, reasonId: reasonId || undefined });
     setPending(false);
     if (!result.ok) {
       setError(result.error);
@@ -97,11 +101,11 @@ export function StatusControl({
           </label>
           <select
             id="status"
-            value={nextStatus}
-            onChange={(e) => setNextStatus(e.target.value as EnquiryStatus)}
+            value={nextStage}
+            onChange={(e) => setNextStage(e.target.value as EnquiryStage)}
             className="mt-1 rounded border border-neutral-300 px-2 py-1 text-sm"
           >
-            {STATUSES.map((s) => (
+            {STAGES.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>
@@ -133,7 +137,7 @@ export function StatusControl({
         )}
         <button
           type="submit"
-          disabled={pending || nextStatus === currentStatus}
+          disabled={pending || nextStage === currentStage}
           className="rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
         >
           Update status

@@ -69,3 +69,10 @@ export async function createTestUser(admin: SupabaseClient<Database>, venueId: s
 
   return { userId: created.user.id, email, password, client };
 }
+
+/** Creates a contact row for use as an enquiry's contact_id — enquiries no longer carry contact fields inline. */
+export async function createTestContact(client: SupabaseClient<Database>, venueId: string, name: string): Promise<string> {
+  const { data, error } = await client.from("contacts").insert({ venue_id: venueId, name, phone: "0000000000" }).select("id").single();
+  if (error || !data) throw error ?? new Error("failed to create test contact");
+  return data.id;
+}

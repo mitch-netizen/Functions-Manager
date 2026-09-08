@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { adminClient, anonClient, createTestVenue, createTestUser, type TestUser, type TestVenue } from "./helpers";
+import { adminClient, anonClient, createTestVenue, createTestUser, createTestContact, type TestUser, type TestVenue } from "./helpers";
 
 async function createConfirmedEvent(admin: ReturnType<typeof adminClient>, coordinator: TestUser, venueId: string, contactName: string) {
   const { data: space } = await admin.from("spaces").insert({ venue_id: venueId, name: `Room for ${contactName}` }).select("id").single();
 
   const { data: ref } = await coordinator.client.rpc("next_enquiry_reference", { p_venue_id: venueId });
+  const contactId = await createTestContact(coordinator.client, venueId, contactName);
   const { data: enquiry } = await coordinator.client
     .from("enquiries")
-    .insert({ venue_id: venueId, reference_number: ref as string, source: "phone", contact_name: contactName, contact_phone: "0000000000" })
+    .insert({ venue_id: venueId, reference_number: ref as string, source: "phone", contact_id: contactId })
     .select("id")
     .single();
 
@@ -33,13 +34,13 @@ describe("accommodation booking (RMS room block)", () => {
   beforeAll(async () => {
     venueA = await createTestVenue(admin, "rls-accom-a");
     venueB = await createTestVenue(admin, "rls-accom-b");
-    coordinatorA = await createTestUser(admin, venueA.venueId, "coordinator");
-    viewerA = await createTestUser(admin, venueA.venueId, "viewer");
-    userB = await createTestUser(admin, venueB.venueId, "coordinator");
+    coordinatorA = await createTestUser(admin, venueA.venueId, "duty_manager");
+    viewerA = await createTestUser(admin, venueA.venueId, "executive_readonly");
+    userB = await createTestUser(admin, venueB.venueId, "duty_manager");
     eventId = await createConfirmedEvent(admin, coordinatorA, venueA.venueId, "Accommodation Test Event");
   });
 
-  it("lets a coordinator create a block but blocks a viewer and a cross-venue user", async () => {
+  it("lets a duty manager create a block but blocks an executive read-only user and a cross-venue user", async () => {
     const { error: viewerError } = await viewerA.client
       .from("accommodation_blocks")
       .insert({

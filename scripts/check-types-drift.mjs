@@ -10,6 +10,22 @@
 // regenerated."
 import { readFileSync } from "node:fs";
 
+// The live "The Queens" Supabase project also hosts a separate,
+// unrelated revenue-tracking app (its own tables, never created by any
+// migration in this repo — see DECISIONS.md). Those tables are real in
+// the live schema the committed types file was generated from, but a
+// fresh CI Postgres instance built solely from this repo's tracked
+// migrations will never have them, so they'd otherwise show up as a
+// permanent, unfixable "in the committed file but not the live schema"
+// mismatch. Ignore anything under this prefix on both sides of the
+// comparison rather than trying to keep them in sync with a schema this
+// repo doesn't own.
+const FOREIGN_TABLE_PREFIXES = ["rev_"];
+
+function stripForeignNames(names) {
+  return new Set([...names].filter((name) => !FOREIGN_TABLE_PREFIXES.some((prefix) => name.startsWith(prefix))));
+}
+
 // `supabase gen types typescript --local` includes the local stack's
 // `graphql_public` schema (from the pg_graphql extension) ahead of `public`
 // in its output, while the Management API path used to generate the
@@ -77,10 +93,13 @@ const committedPublic = publicSchemaBlock(readFileSync(committedPath, "utf8"));
 
 let failed = false;
 for (const block of ["Tables", "Functions", "Enums"]) {
-  const { onlyInA: onlyInGenerated, onlyInB: onlyInCommitted } = diffSets(
-    namesUnderBlock(generatedPublic, block),
-    namesUnderBlock(committedPublic, block)
-  );
+  let generatedNames = namesUnderBlock(generatedPublic, block);
+  let committedNames = namesUnderBlock(committedPublic, block);
+  if (block === "Tables") {
+    generatedNames = stripForeignNames(generatedNames);
+    committedNames = stripForeignNames(committedNames);
+  }
+  const { onlyInA: onlyInGenerated, onlyInB: onlyInCommitted } = diffSets(generatedNames, committedNames);
   if (onlyInGenerated.length > 0 || onlyInCommitted.length > 0) {
     failed = true;
     console.error(`Mismatch in "${block}":`);

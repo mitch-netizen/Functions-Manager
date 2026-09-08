@@ -6,7 +6,7 @@ import { inviteVenueUser, updateVenueUserRole, removeVenueUser } from "@/lib/dom
 import type { VenueUserRow } from "@/lib/domain/admin/venue-users";
 import type { VenueRole } from "@/lib/types/database.types";
 
-const ROLES: VenueRole[] = ["admin", "manager", "coordinator", "viewer"];
+const ROLES: VenueRole[] = ["admin", "functions_manager", "duty_manager", "kitchen", "executive_readonly"];
 
 export function UsersEditor({ users, canInvite }: { users: VenueUserRow[]; canInvite: boolean }) {
   const router = useRouter();
@@ -77,7 +77,7 @@ export function UsersEditor({ users, canInvite }: { users: VenueUserRow[]; canIn
             placeholder="email@example.com"
             className="flex-1 rounded border border-neutral-300 px-2 py-1 text-sm"
           />
-          <select name="role" defaultValue="coordinator" className="rounded border border-neutral-300 px-2 py-1 text-sm">
+          <select name="role" defaultValue="duty_manager" className="rounded border border-neutral-300 px-2 py-1 text-sm">
             {ROLES.map((r) => (
               <option key={r} value={r}>
                 {r}

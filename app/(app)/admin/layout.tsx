@@ -6,7 +6,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const ctx = await requireSessionContext();
   // Defense in depth on top of RLS — a coordinator/viewer gets redirected
   // rather than loading an admin page that silently returns nothing.
-  if (ctx.activeRole !== "admin" && ctx.activeRole !== "manager") redirect("/pipeline");
+  if (ctx.activeRole !== "admin" && ctx.activeRole !== "functions_manager") redirect("/pipeline");
 
   return (
     <div className="mx-auto max-w-3xl">

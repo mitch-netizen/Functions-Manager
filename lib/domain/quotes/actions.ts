@@ -172,11 +172,13 @@ export async function sendQuote(quoteId: string): Promise<ActionResult<null>> {
 
   const { data: enquiry, error: enquiryError } = await supabase
     .from("enquiries")
-    .select("contact_name, contact_email, reference_number")
+    .select("reference_number, contacts(name, email)")
     .eq("id", quote.enquiry_id)
     .single();
   if (enquiryError || !enquiry) return { ok: false, error: enquiryError?.message ?? "enquiry not found" };
-  if (!enquiry.contact_email) return { ok: false, error: "this enquiry has no contact email to send the quote to" };
+  const contactName = enquiry.contacts?.name ?? "";
+  const contactEmail = enquiry.contacts?.email ?? null;
+  if (!contactEmail) return { ok: false, error: "this enquiry has no contact email to send the quote to" };
 
   const { data: venue, error: venueError } = await supabase
     .from("venues")
@@ -195,7 +197,7 @@ export async function sendQuote(quoteId: string): Promise<ActionResult<null>> {
       venueAddress: venue.address,
       abn: venue.abn,
       referenceNumber: enquiry.reference_number,
-      contactName: enquiry.contact_name,
+      contactName,
       version: quote.version,
       lineItems: lineItems.map((li) => ({
         id: li.id,
@@ -243,7 +245,10 @@ export async function sendQuote(quoteId: string): Promise<ActionResult<null>> {
 
   const { error: statusError } = await supabase.rpc("update_enquiry_status", {
     p_enquiry_id: quote.enquiry_id,
-    p_to_status: "proposal_sent",
+    // No dedicated "proposal sent" stage in the real pipeline vocabulary —
+    // sending a quote is exactly the "in conversation, waiting on them"
+    // case active_enquiry already covers.
+    p_to_stage: "active_enquiry",
   });
   if (statusError) return { ok: false, error: statusError.message };
 
@@ -251,7 +256,7 @@ export async function sendQuote(quoteId: string): Promise<ActionResult<null>> {
   await supabase.from("tasks").insert({
     venue_id: ctx.activeVenueId,
     enquiry_id: quote.enquiry_id,
-    title: `Follow up on quote v${quote.version} with ${enquiry.contact_name}`,
+    title: `Follow up on quote v${quote.version} with ${contactName}`,
     due_date: addBusinessDays(new Date(), followupDays).toISOString().slice(0, 10),
     assignee_user_id: ctx.userId,
     source: "auto_proposal_sent",
@@ -259,9 +264,9 @@ export async function sendQuote(quoteId: string): Promise<ActionResult<null>> {
 
   try {
     await getEmailSender().send({
-      to: enquiry.contact_email,
+      to: contactEmail,
       subject: `Your quote from ${venue.name} — ${enquiry.reference_number}`,
-      react: QuoteSentEmail({ brand, contactName: enquiry.contact_name, referenceNumber: enquiry.reference_number }),
+      react: QuoteSentEmail({ brand, contactName, referenceNumber: enquiry.reference_number }),
       tags: { venueId: ctx.activeVenueId, enquiryId: quote.enquiry_id },
       attachments: [{ filename, content: pdfBuffer }],
     });
@@ -269,7 +274,7 @@ export async function sendQuote(quoteId: string): Promise<ActionResult<null>> {
       venue_id: ctx.activeVenueId,
       enquiry_id: quote.enquiry_id,
       type: "email_sent",
-      body: `Quote v${quote.version} sent to ${enquiry.contact_email}.`,
+      body: `Quote v${quote.version} sent to ${contactEmail}.`,
       actor_user_id: ctx.userId,
     });
   } catch {

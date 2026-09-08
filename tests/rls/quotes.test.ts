@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { adminClient, createTestVenue, createTestUser, type TestUser, type TestVenue } from "./helpers";
+import { adminClient, createTestVenue, createTestUser, createTestContact, type TestUser, type TestVenue } from "./helpers";
 
 describe("packages: role-restricted writes", () => {
   const admin = adminClient();
@@ -9,16 +9,16 @@ describe("packages: role-restricted writes", () => {
 
   beforeAll(async () => {
     venue = await createTestVenue(admin, "rls-packages");
-    coordinator = await createTestUser(admin, venue.venueId, "coordinator");
-    manager = await createTestUser(admin, venue.venueId, "manager");
+    coordinator = await createTestUser(admin, venue.venueId, "duty_manager");
+    manager = await createTestUser(admin, venue.venueId, "functions_manager");
   });
 
-  it("blocks a coordinator from creating a package (admin/manager only, per the brief)", async () => {
+  it("blocks a duty manager from creating a package (admin/functions_manager only, per the brief)", async () => {
     const { error } = await coordinator.client.from("packages").insert({ venue_id: venue.venueId, name: "Should fail", category: "food" });
     expect(error).not.toBeNull();
   });
 
-  it("allows a manager to create a package", async () => {
+  it("allows a functions manager to create a package", async () => {
     const { error } = await manager.client.from("packages").insert({ venue_id: venue.venueId, name: "Set menu", category: "food", per_head_price: 85 });
     expect(error).toBeNull();
   });
@@ -34,17 +34,17 @@ describe("quotes: immutability once sent", () => {
 
   beforeAll(async () => {
     venue = await createTestVenue(admin, "rls-quote-immutability");
-    coordinator = await createTestUser(admin, venue.venueId, "coordinator");
+    coordinator = await createTestUser(admin, venue.venueId, "duty_manager");
 
     const { data: ref } = await coordinator.client.rpc("next_enquiry_reference", { p_venue_id: venue.venueId });
+    const contactId = await createTestContact(coordinator.client, venue.venueId, "Quote Test Contact");
     const { data: enquiry } = await coordinator.client
       .from("enquiries")
       .insert({
         venue_id: venue.venueId,
         reference_number: ref as string,
         source: "phone",
-        contact_name: "Quote Test Contact",
-        contact_phone: "0000000000",
+        contact_id: contactId,
       })
       .select("id")
       .single();

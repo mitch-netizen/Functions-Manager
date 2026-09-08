@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { adminClient, createTestVenue, createTestUser, type TestUser, type TestVenue } from "./helpers";
+import { adminClient, createTestVenue, createTestUser, createTestContact, type TestUser, type TestVenue } from "./helpers";
 
 async function createEnquiry(user: TestUser, venueId: string, contactName: string) {
   const { data: ref } = await user.client.rpc("next_enquiry_reference", { p_venue_id: venueId });
+  const contactId = await createTestContact(user.client, venueId, contactName);
   const { data: enquiry } = await user.client
     .from("enquiries")
-    .insert({ venue_id: venueId, reference_number: ref as string, source: "phone", contact_name: contactName, contact_phone: "0000000000" })
+    .insert({ venue_id: venueId, reference_number: ref as string, source: "phone", contact_id: contactId })
     .select("id")
     .single();
   return enquiry!.id as string;
@@ -23,9 +24,9 @@ describe("confirm_enquiry: the pivotal confirmation transaction", () => {
   beforeAll(async () => {
     venueA = await createTestVenue(admin, "rls-confirm-a");
     venueB = await createTestVenue(admin, "rls-confirm-b");
-    coordinatorA = await createTestUser(admin, venueA.venueId, "coordinator");
-    viewerA = await createTestUser(admin, venueA.venueId, "viewer");
-    userB = await createTestUser(admin, venueB.venueId, "coordinator");
+    coordinatorA = await createTestUser(admin, venueA.venueId, "duty_manager");
+    viewerA = await createTestUser(admin, venueA.venueId, "executive_readonly");
+    userB = await createTestUser(admin, venueB.venueId, "duty_manager");
 
     const { data: space } = await admin.from("spaces").insert({ venue_id: venueA.venueId, name: "Function Room" }).select("id").single();
     spaceId = space!.id;
@@ -48,8 +49,8 @@ describe("confirm_enquiry: the pivotal confirmation transaction", () => {
     const { data: hold } = await coordinatorA.client.from("holds").select("hold_type").eq("enquiry_id", enquiryId).single();
     expect(hold?.hold_type).toBe("confirmed");
 
-    const { data: enquiry } = await coordinatorA.client.from("enquiries").select("status").eq("id", enquiryId).single();
-    expect(enquiry?.status).toBe("confirmed");
+    const { data: enquiry } = await coordinatorA.client.from("enquiries").select("stage").eq("id", enquiryId).single();
+    expect(enquiry?.stage).toBe("confirmed");
   });
 
   it("rejects confirming a space that's already confirmed for an overlapping time", async () => {
@@ -72,7 +73,7 @@ describe("confirm_enquiry: the pivotal confirmation transaction", () => {
     expect(error?.message).toContain("First Booking");
   });
 
-  it("blocks a viewer from confirming an enquiry", async () => {
+  it("blocks an executive read-only user from confirming an enquiry", async () => {
     const enquiryId = await createEnquiry(coordinatorA, venueA.venueId, "Viewer Blocked");
     const { error } = await viewerA.client.rpc("confirm_enquiry", {
       p_enquiry_id: enquiryId,
