@@ -1,9 +1,10 @@
 // Generated from the live "The Queens" Supabase project
 // (zbzoymnunjwwgwgklaui, ap-southeast-2) via
 // `mcp__Supabase__generate_typescript_types` after applying
-// 20260906153500_p9_repoint_actor_fks_to_profiles.sql. Never hand-edited
-// beyond the two narrow, documented deviations below — regenerate
-// wholesale after any future migration and reapply both:
+// 20260908160000_p10_venue_role_rename.sql and
+// 20260908160500_p11_queens_domain_rebuild.sql. Never hand-edited beyond
+// the two narrow, documented deviations below — regenerate wholesale
+// after any future migration and reapply both:
 //
 // 1. Two RPC Args blocks (create_public_enquiry, below and
 //    record_public_accommodation_booking) have several params widened to
@@ -294,75 +295,300 @@ export type Database = {
         }
         Relationships: []
       }
-      enquiries: {
+      booking_types: {
         Row: {
-          alternate_dates: string[] | null
-          brief_description: string | null
-          budget_indication: number | null
-          contact_email: string | null
-          contact_name: string
-          contact_phone: string
+          accepted_payment_methods: Database["public"]["Enums"]["payment_method"][]
+          active: boolean
+          cancellation_full_refund_days_before: number
+          cancellation_nonrefundable_within_days: number
           created_at: string
-          created_by: string | null
-          date_flexible: boolean
-          event_type_id: string | null
-          headcount_estimate: number | null
+          deposit_basis: Database["public"]["Enums"]["deposit_basis"]
+          deposit_percent: number | null
+          display_order: number
+          final_numbers_days_before: number
+          flat_deposit_amount: number | null
           id: string
-          organisation: string | null
-          owner_user_id: string | null
-          preferred_date: string | null
-          reference_number: string
-          source: Database["public"]["Enums"]["enquiry_source"]
-          space_preference_id: string | null
-          status: Database["public"]["Enums"]["enquiry_status"]
+          name: string
+          payment_due_days_before: number
+          requires_minimum_spend: boolean
+          tentative_hold_days: number
+          terms_file_id: string | null
+          venue_id: string
+        }
+        Insert: {
+          accepted_payment_methods?: Database["public"]["Enums"]["payment_method"][]
+          active?: boolean
+          cancellation_full_refund_days_before: number
+          cancellation_nonrefundable_within_days: number
+          created_at?: string
+          deposit_basis: Database["public"]["Enums"]["deposit_basis"]
+          deposit_percent?: number | null
+          display_order?: number
+          final_numbers_days_before: number
+          flat_deposit_amount?: number | null
+          id?: string
+          name: string
+          payment_due_days_before: number
+          requires_minimum_spend?: boolean
+          tentative_hold_days: number
+          terms_file_id?: string | null
+          venue_id: string
+        }
+        Update: {
+          accepted_payment_methods?: Database["public"]["Enums"]["payment_method"][]
+          active?: boolean
+          cancellation_full_refund_days_before?: number
+          cancellation_nonrefundable_within_days?: number
+          created_at?: string
+          deposit_basis?: Database["public"]["Enums"]["deposit_basis"]
+          deposit_percent?: number | null
+          display_order?: number
+          final_numbers_days_before?: number
+          flat_deposit_amount?: number | null
+          id?: string
+          name?: string
+          payment_due_days_before?: number
+          requires_minimum_spend?: boolean
+          tentative_hold_days?: number
+          terms_file_id?: string | null
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_types_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_types_venue_id_terms_file_id_fkey"
+            columns: ["venue_id", "terms_file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["venue_id", "id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
           updated_at: string
           venue_id: string
         }
         Insert: {
-          alternate_dates?: string[] | null
-          brief_description?: string | null
-          budget_indication?: number | null
-          contact_email?: string | null
-          contact_name: string
-          contact_phone: string
           created_at?: string
-          created_by?: string | null
-          date_flexible?: boolean
-          event_type_id?: string | null
-          headcount_estimate?: number | null
+          email?: string | null
           id?: string
-          organisation?: string | null
-          owner_user_id?: string | null
-          preferred_date?: string | null
-          reference_number: string
-          source: Database["public"]["Enums"]["enquiry_source"]
-          space_preference_id?: string | null
-          status?: Database["public"]["Enums"]["enquiry_status"]
+          name: string
+          notes?: string | null
+          phone?: string | null
           updated_at?: string
           venue_id: string
         }
         Update: {
-          alternate_dates?: string[] | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enquiries: {
+        Row: {
+          access_time: string | null
+          bar_arrangement: Database["public"]["Enums"]["bar_arrangement"] | null
+          bar_tab_limit: number | null
+          bar_tab_prepaid: boolean | null
+          booking_form_file_id: string | null
+          booking_form_signed_at: string | null
+          booking_type_id: string | null
+          brief_description: string | null
+          budget_indication: number | null
+          bump_out_deadline: string | null
+          cancellation_approved_by: string | null
+          cancellation_approved_reason: string | null
+          cancellation_reason: string | null
+          candles_approved: boolean | null
+          card_on_file: boolean
+          catering_ordered_at: string | null
+          contact_id: string
+          created_at: string
+          created_by: string | null
+          decorations_notes: string | null
+          deposit_amount_due: number | null
+          deposit_received_at: string | null
+          deposit_reference: string | null
+          end_time: string | null
+          event_name: string | null
+          event_type_id: string | null
+          external_catering_approved: boolean | null
+          final_numbers_confirmed_at: string | null
+          final_pax: number | null
+          golf_bays_booked: number
+          golf_end: string | null
+          golf_external_reference: string | null
+          golf_paid_at: string | null
+          golf_payment_status: Database["public"]["Enums"]["golf_payment_status"]
+          golf_rate_per_bay_hour: number | null
+          golf_start: string | null
+          id: string
+          minors_attending: boolean | null
+          minors_count: number | null
+          minors_notes: string | null
+          on_hold_release_date: string | null
+          organisation_id: string | null
+          owner_user_id: string | null
+          pax_max: number | null
+          pax_min: number | null
+          payment_due_at: string | null
+          payment_received_at: string | null
+          preferred_date: string | null
+          reference_number: string
+          source: Database["public"]["Enums"]["enquiry_source"]
+          space_preference_id: string | null
+          stage: Database["public"]["Enums"]["enquiry_stage"]
+          start_time: string | null
+          updated_at: string
+          venue_id: string
+          verbal_confirmation_at: string | null
+        }
+        Insert: {
+          access_time?: string | null
+          bar_arrangement?:
+            | Database["public"]["Enums"]["bar_arrangement"]
+            | null
+          bar_tab_limit?: number | null
+          bar_tab_prepaid?: boolean | null
+          booking_form_file_id?: string | null
+          booking_form_signed_at?: string | null
+          booking_type_id?: string | null
           brief_description?: string | null
           budget_indication?: number | null
-          contact_email?: string | null
-          contact_name?: string
-          contact_phone?: string
+          bump_out_deadline?: string | null
+          cancellation_approved_by?: string | null
+          cancellation_approved_reason?: string | null
+          cancellation_reason?: string | null
+          candles_approved?: boolean | null
+          card_on_file?: boolean
+          catering_ordered_at?: string | null
+          contact_id: string
           created_at?: string
           created_by?: string | null
-          date_flexible?: boolean
+          decorations_notes?: string | null
+          deposit_amount_due?: number | null
+          deposit_received_at?: string | null
+          deposit_reference?: string | null
+          end_time?: string | null
+          event_name?: string | null
           event_type_id?: string | null
-          headcount_estimate?: number | null
+          external_catering_approved?: boolean | null
+          final_numbers_confirmed_at?: string | null
+          final_pax?: number | null
+          golf_bays_booked?: number
+          golf_end?: string | null
+          golf_external_reference?: string | null
+          golf_paid_at?: string | null
+          golf_payment_status?: Database["public"]["Enums"]["golf_payment_status"]
+          golf_rate_per_bay_hour?: number | null
+          golf_start?: string | null
           id?: string
-          organisation?: string | null
+          minors_attending?: boolean | null
+          minors_count?: number | null
+          minors_notes?: string | null
+          on_hold_release_date?: string | null
+          organisation_id?: string | null
           owner_user_id?: string | null
+          pax_max?: number | null
+          pax_min?: number | null
+          payment_due_at?: string | null
+          payment_received_at?: string | null
+          preferred_date?: string | null
+          reference_number: string
+          source: Database["public"]["Enums"]["enquiry_source"]
+          space_preference_id?: string | null
+          stage?: Database["public"]["Enums"]["enquiry_stage"]
+          start_time?: string | null
+          updated_at?: string
+          venue_id: string
+          verbal_confirmation_at?: string | null
+        }
+        Update: {
+          access_time?: string | null
+          bar_arrangement?:
+            | Database["public"]["Enums"]["bar_arrangement"]
+            | null
+          bar_tab_limit?: number | null
+          bar_tab_prepaid?: boolean | null
+          booking_form_file_id?: string | null
+          booking_form_signed_at?: string | null
+          booking_type_id?: string | null
+          brief_description?: string | null
+          budget_indication?: number | null
+          bump_out_deadline?: string | null
+          cancellation_approved_by?: string | null
+          cancellation_approved_reason?: string | null
+          cancellation_reason?: string | null
+          candles_approved?: boolean | null
+          card_on_file?: boolean
+          catering_ordered_at?: string | null
+          contact_id?: string
+          created_at?: string
+          created_by?: string | null
+          decorations_notes?: string | null
+          deposit_amount_due?: number | null
+          deposit_received_at?: string | null
+          deposit_reference?: string | null
+          end_time?: string | null
+          event_name?: string | null
+          event_type_id?: string | null
+          external_catering_approved?: boolean | null
+          final_numbers_confirmed_at?: string | null
+          final_pax?: number | null
+          golf_bays_booked?: number
+          golf_end?: string | null
+          golf_external_reference?: string | null
+          golf_paid_at?: string | null
+          golf_payment_status?: Database["public"]["Enums"]["golf_payment_status"]
+          golf_rate_per_bay_hour?: number | null
+          golf_start?: string | null
+          id?: string
+          minors_attending?: boolean | null
+          minors_count?: number | null
+          minors_notes?: string | null
+          on_hold_release_date?: string | null
+          organisation_id?: string | null
+          owner_user_id?: string | null
+          pax_max?: number | null
+          pax_min?: number | null
+          payment_due_at?: string | null
+          payment_received_at?: string | null
           preferred_date?: string | null
           reference_number?: string
           source?: Database["public"]["Enums"]["enquiry_source"]
           space_preference_id?: string | null
-          status?: Database["public"]["Enums"]["enquiry_status"]
+          stage?: Database["public"]["Enums"]["enquiry_stage"]
+          start_time?: string | null
           updated_at?: string
           venue_id?: string
+          verbal_confirmation_at?: string | null
         }
         Relationships: [
           {
@@ -394,6 +620,34 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_enquiries_booking_form_file"
+            columns: ["venue_id", "booking_form_file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["venue_id", "id"]
+          },
+          {
+            foreignKeyName: "fk_enquiries_booking_type"
+            columns: ["venue_id", "booking_type_id"]
+            isOneToOne: false
+            referencedRelation: "booking_types"
+            referencedColumns: ["venue_id", "id"]
+          },
+          {
+            foreignKeyName: "fk_enquiries_contact"
+            columns: ["venue_id", "contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["venue_id", "id"]
+          },
+          {
+            foreignKeyName: "fk_enquiries_organisation"
+            columns: ["venue_id", "organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["venue_id", "id"]
+          },
+          {
             foreignKeyName: "fk_enquiries_space_preference"
             columns: ["venue_id", "space_preference_id"]
             isOneToOne: false
@@ -407,40 +661,33 @@ export type Database = {
           actor_user_id: string | null
           created_at: string
           enquiry_id: string
-          from_status: Database["public"]["Enums"]["enquiry_status"] | null
+          from_stage: Database["public"]["Enums"]["enquiry_stage"] | null
           id: string
           reason_id: string | null
-          to_status: Database["public"]["Enums"]["enquiry_status"]
+          to_stage: Database["public"]["Enums"]["enquiry_stage"]
           venue_id: string
         }
         Insert: {
           actor_user_id?: string | null
           created_at?: string
           enquiry_id: string
-          from_status?: Database["public"]["Enums"]["enquiry_status"] | null
+          from_stage?: Database["public"]["Enums"]["enquiry_stage"] | null
           id?: string
           reason_id?: string | null
-          to_status: Database["public"]["Enums"]["enquiry_status"]
+          to_stage: Database["public"]["Enums"]["enquiry_stage"]
           venue_id: string
         }
         Update: {
           actor_user_id?: string | null
           created_at?: string
           enquiry_id?: string
-          from_status?: Database["public"]["Enums"]["enquiry_status"] | null
+          from_stage?: Database["public"]["Enums"]["enquiry_stage"] | null
           id?: string
           reason_id?: string | null
-          to_status?: Database["public"]["Enums"]["enquiry_status"]
+          to_stage?: Database["public"]["Enums"]["enquiry_stage"]
           venue_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "enquiry_status_history_actor_user_id_fkey"
-            columns: ["actor_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "enquiry_status_history_enquiry_id_fkey"
             columns: ["enquiry_id"]
@@ -631,13 +878,18 @@ export type Database = {
           completed_at: string | null
           confirmed_ends_at: string
           confirmed_starts_at: string
+          contra_booking: boolean
           created_at: string
           enquiry_id: string
           final_headcount: number | null
           id: string
+          opentable_entered: boolean
           room_setup: string | null
+          run_sheet_generated: boolean
           run_sheet_notes: string | null
+          run_sheet_printed: boolean
           special_instructions: string | null
+          staff_briefed: boolean
           venue_id: string
         }
         Insert: {
@@ -649,13 +901,18 @@ export type Database = {
           completed_at?: string | null
           confirmed_ends_at: string
           confirmed_starts_at: string
+          contra_booking?: boolean
           created_at?: string
           enquiry_id: string
           final_headcount?: number | null
           id?: string
+          opentable_entered?: boolean
           room_setup?: string | null
+          run_sheet_generated?: boolean
           run_sheet_notes?: string | null
+          run_sheet_printed?: boolean
           special_instructions?: string | null
+          staff_briefed?: boolean
           venue_id: string
         }
         Update: {
@@ -667,13 +924,18 @@ export type Database = {
           completed_at?: string | null
           confirmed_ends_at?: string
           confirmed_starts_at?: string
+          contra_booking?: boolean
           created_at?: string
           enquiry_id?: string
           final_headcount?: number | null
           id?: string
+          opentable_entered?: boolean
           room_setup?: string | null
+          run_sheet_generated?: boolean
           run_sheet_notes?: string | null
+          run_sheet_printed?: boolean
           special_instructions?: string | null
+          staff_briefed?: boolean
           venue_id?: string
         }
         Relationships: [
@@ -854,6 +1116,41 @@ export type Database = {
           },
         ]
       }
+      organisations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisations_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       packages: {
         Row: {
           active: boolean
@@ -900,6 +1197,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "packages_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          enquiry_id: string
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          notes: string | null
+          received_at: string
+          recorded_by: string | null
+          reference: string | null
+          type: Database["public"]["Enums"]["payment_type"]
+          venue_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          enquiry_id: string
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          notes?: string | null
+          received_at?: string
+          recorded_by?: string | null
+          reference?: string | null
+          type: Database["public"]["Enums"]["payment_type"]
+          venue_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          enquiry_id?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          notes?: string | null
+          received_at?: string
+          recorded_by?: string | null
+          reference?: string | null
+          type?: Database["public"]["Enums"]["payment_type"]
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_venue_id_enquiry_id_fkey"
+            columns: ["venue_id", "enquiry_id"]
+            isOneToOne: false
+            referencedRelation: "enquiries"
+            referencedColumns: ["venue_id", "id"]
+          },
+          {
+            foreignKeyName: "payments_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
@@ -1130,6 +1484,530 @@ export type Database = {
           },
         ]
       }
+      reply_templates: {
+        Row: {
+          active: boolean
+          body_template: string
+          created_at: string
+          id: string
+          kind: string
+          label: string
+          lead_days: number
+          subject_template: string | null
+          trigger_key: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          active?: boolean
+          body_template: string
+          created_at?: string
+          id?: string
+          kind?: string
+          label: string
+          lead_days?: number
+          subject_template?: string | null
+          trigger_key: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          active?: boolean
+          body_template?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string
+          lead_days?: number
+          subject_template?: string | null
+          trigger_key?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reply_templates_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rev_daily_actuals: {
+        Row: {
+          entered_by: string | null
+          id: string
+          revenue_line_id: string
+          source: string
+          source_document_id: string | null
+          trade_date: string
+          updated_at: string
+          value: number
+          venue_id: string
+        }
+        Insert: {
+          entered_by?: string | null
+          id?: string
+          revenue_line_id: string
+          source: string
+          source_document_id?: string | null
+          trade_date: string
+          updated_at?: string
+          value: number
+          venue_id: string
+        }
+        Update: {
+          entered_by?: string | null
+          id?: string
+          revenue_line_id?: string
+          source?: string
+          source_document_id?: string | null
+          trade_date?: string
+          updated_at?: string
+          value?: number
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rev_daily_actuals_entered_by_fkey"
+            columns: ["entered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_daily_actuals_revenue_line_id_fkey"
+            columns: ["revenue_line_id"]
+            isOneToOne: false
+            referencedRelation: "rev_revenue_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_daily_actuals_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "rev_source_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_daily_actuals_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rev_parsed_line_items: {
+        Row: {
+          corrected_value: number | null
+          extracted_value: number
+          flag: string
+          id: string
+          revenue_line_id: string
+          source_document_id: string
+          trade_date: string
+        }
+        Insert: {
+          corrected_value?: number | null
+          extracted_value: number
+          flag?: string
+          id?: string
+          revenue_line_id: string
+          source_document_id: string
+          trade_date: string
+        }
+        Update: {
+          corrected_value?: number | null
+          extracted_value?: number
+          flag?: string
+          id?: string
+          revenue_line_id?: string
+          source_document_id?: string
+          trade_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rev_parsed_line_items_revenue_line_id_fkey"
+            columns: ["revenue_line_id"]
+            isOneToOne: false
+            referencedRelation: "rev_revenue_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_parsed_line_items_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "rev_source_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rev_pos_location_mapping: {
+        Row: {
+          active: boolean
+          food_line_id: string | null
+          id: string
+          liquor_line_id: string | null
+          location_name: string
+          pos_location_number: number
+          venue_id: string
+        }
+        Insert: {
+          active?: boolean
+          food_line_id?: string | null
+          id?: string
+          liquor_line_id?: string | null
+          location_name: string
+          pos_location_number: number
+          venue_id: string
+        }
+        Update: {
+          active?: boolean
+          food_line_id?: string | null
+          id?: string
+          liquor_line_id?: string | null
+          location_name?: string
+          pos_location_number?: number
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rev_pos_location_mapping_food_line_id_fkey"
+            columns: ["food_line_id"]
+            isOneToOne: false
+            referencedRelation: "rev_revenue_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_pos_location_mapping_liquor_line_id_fkey"
+            columns: ["liquor_line_id"]
+            isOneToOne: false
+            referencedRelation: "rev_revenue_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_pos_location_mapping_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rev_revenue_line_group_members: {
+        Row: {
+          group_id: string
+          revenue_line_id: string
+        }
+        Insert: {
+          group_id: string
+          revenue_line_id: string
+        }
+        Update: {
+          group_id?: string
+          revenue_line_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rev_revenue_line_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "rev_revenue_line_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_revenue_line_group_members_revenue_line_id_fkey"
+            columns: ["revenue_line_id"]
+            isOneToOne: false
+            referencedRelation: "rev_revenue_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rev_revenue_line_groups: {
+        Row: {
+          display_order: number
+          id: string
+          key: string
+          label: string
+          venue_id: string
+        }
+        Insert: {
+          display_order: number
+          id?: string
+          key: string
+          label: string
+          venue_id: string
+        }
+        Update: {
+          display_order?: number
+          id?: string
+          key?: string
+          label?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rev_revenue_line_groups_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rev_revenue_lines: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_order: number
+          id: string
+          is_averaged: boolean
+          key: string
+          label: string
+          unit: string
+          venue_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_order: number
+          id?: string
+          is_averaged?: boolean
+          key: string
+          label: string
+          unit: string
+          venue_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_averaged?: boolean
+          key?: string
+          label?: string
+          unit?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rev_revenue_lines_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rev_source_documents: {
+        Row: {
+          filename: string
+          id: string
+          raw_extracted: Json | null
+          status: string
+          storage_path: string
+          type: string
+          uploaded_at: string
+          uploaded_by: string | null
+          venue_id: string
+        }
+        Insert: {
+          filename: string
+          id?: string
+          raw_extracted?: Json | null
+          status?: string
+          storage_path: string
+          type: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          venue_id: string
+        }
+        Update: {
+          filename?: string
+          id?: string
+          raw_extracted?: Json | null
+          status?: string
+          storage_path?: string
+          type?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rev_source_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_source_documents_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rev_standing_targets: {
+        Row: {
+          amount: number
+          created_at: string
+          day_of_week: number
+          effective_from: string
+          effective_to: string | null
+          group_id: string | null
+          id: string
+          revenue_line_id: string | null
+          venue_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          day_of_week: number
+          effective_from?: string
+          effective_to?: string | null
+          group_id?: string | null
+          id?: string
+          revenue_line_id?: string | null
+          venue_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          day_of_week?: number
+          effective_from?: string
+          effective_to?: string | null
+          group_id?: string | null
+          id?: string
+          revenue_line_id?: string | null
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rev_standing_targets_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "rev_revenue_line_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_standing_targets_revenue_line_id_fkey"
+            columns: ["revenue_line_id"]
+            isOneToOne: false
+            referencedRelation: "rev_revenue_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_standing_targets_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rev_weekly_targets: {
+        Row: {
+          amount: number
+          day_of_week: number
+          group_id: string | null
+          id: string
+          revenue_line_id: string | null
+          source: string
+          week_id: string
+        }
+        Insert: {
+          amount: number
+          day_of_week: number
+          group_id?: string | null
+          id?: string
+          revenue_line_id?: string | null
+          source: string
+          week_id: string
+        }
+        Update: {
+          amount?: number
+          day_of_week?: number
+          group_id?: string | null
+          id?: string
+          revenue_line_id?: string | null
+          source?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rev_weekly_targets_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "rev_revenue_line_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_weekly_targets_revenue_line_id_fkey"
+            columns: ["revenue_line_id"]
+            isOneToOne: false
+            referencedRelation: "rev_revenue_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_weekly_targets_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "rev_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rev_weeks: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          id: string
+          status: string
+          venue_id: string
+          week_start_date: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          venue_id: string
+          week_start_date: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          venue_id?: string
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rev_weeks_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rev_weeks_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spaces: {
         Row: {
           active: boolean
@@ -1308,48 +2186,81 @@ export type Database = {
       }
       venue_settings: {
         Row: {
+          abn: string | null
+          auth_allowed_email_domain: string | null
+          bank_account_name: string | null
+          bank_account_number: string | null
+          bank_bsb: string | null
           default_followup_new_enquiry_business_days: number
           default_followup_proposal_sent_business_days: number
           default_owner_user_id: string | null
           default_tentative_hold_days: number
           final_details_days_before_event: number
           final_numbers_days_before_event: number
+          functions_inbox_email: string | null
+          golf_max_bays: number
+          golf_max_participants_per_bay: number
+          golf_rate_per_bay_hour: number
           gst_rate: number
+          gst_registered: boolean
           hold_expiry_warning_days: number
           legal_entity_name: string | null
           privacy_notice_url: string | null
+          remittance_email: string | null
           stale_enquiry_days: number
           terms_and_conditions_file_id: string | null
           updated_at: string
           venue_id: string
         }
         Insert: {
+          abn?: string | null
+          auth_allowed_email_domain?: string | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_bsb?: string | null
           default_followup_new_enquiry_business_days?: number
           default_followup_proposal_sent_business_days?: number
           default_owner_user_id?: string | null
           default_tentative_hold_days?: number
           final_details_days_before_event?: number
           final_numbers_days_before_event?: number
+          functions_inbox_email?: string | null
+          golf_max_bays?: number
+          golf_max_participants_per_bay?: number
+          golf_rate_per_bay_hour?: number
           gst_rate?: number
+          gst_registered?: boolean
           hold_expiry_warning_days?: number
           legal_entity_name?: string | null
           privacy_notice_url?: string | null
+          remittance_email?: string | null
           stale_enquiry_days?: number
           terms_and_conditions_file_id?: string | null
           updated_at?: string
           venue_id: string
         }
         Update: {
+          abn?: string | null
+          auth_allowed_email_domain?: string | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_bsb?: string | null
           default_followup_new_enquiry_business_days?: number
           default_followup_proposal_sent_business_days?: number
           default_owner_user_id?: string | null
           default_tentative_hold_days?: number
           final_details_days_before_event?: number
           final_numbers_days_before_event?: number
+          functions_inbox_email?: string | null
+          golf_max_bays?: number
+          golf_max_participants_per_bay?: number
+          golf_rate_per_bay_hour?: number
           gst_rate?: number
+          gst_registered?: boolean
           hold_expiry_warning_days?: number
           legal_entity_name?: string | null
           privacy_notice_url?: string | null
+          remittance_email?: string | null
           stale_enquiry_days?: number
           terms_and_conditions_file_id?: string | null
           updated_at?: string
@@ -1470,7 +2381,7 @@ export type Database = {
         Args: { p_venue_id: string }
         Returns: string
       }
-      auth_venue_ids: { Args: Record<PropertyKey, never>; Returns: string[] }
+      auth_venue_ids: { Args: never; Returns: string[] }
       auth_venue_role: {
         Args: { p_venue_id: string }
         Returns: Database["public"]["Enums"]["venue_role"]
@@ -1492,14 +2403,25 @@ export type Database = {
           completed_at: string | null
           confirmed_ends_at: string
           confirmed_starts_at: string
+          contra_booking: boolean
           created_at: string
           enquiry_id: string
           final_headcount: number | null
           id: string
+          opentable_entered: boolean
           room_setup: string | null
+          run_sheet_generated: boolean
           run_sheet_notes: string | null
+          run_sheet_printed: boolean
           special_instructions: string | null
+          staff_briefed: boolean
           venue_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "events"
+          isOneToOne: true
+          isSetofReturn: false
         }
       }
       create_public_enquiry: {
@@ -1527,6 +2449,25 @@ export type Database = {
         Returns: {
           enquiry_id: string
           reference_number: string
+        }[]
+      }
+      get_kitchen_bookings: {
+        Args: { p_venue_id: string }
+        Returns: {
+          end_time: string
+          enquiry_id: string
+          event_name: string
+          final_pax: number
+          golf_bays_booked: number
+          golf_end: string
+          golf_start: string
+          minors_attending: boolean
+          pax_max: number
+          pax_min: number
+          preferred_date: string
+          reference_number: string
+          stage: Database["public"]["Enums"]["enquiry_stage"]
+          start_time: string
         }[]
       }
       get_public_accommodation_block: {
@@ -1585,30 +2526,71 @@ export type Database = {
         Args: {
           p_enquiry_id: string
           p_reason_id?: string
-          p_to_status: Database["public"]["Enums"]["enquiry_status"]
+          p_to_stage: Database["public"]["Enums"]["enquiry_stage"]
         }
         Returns: {
-          alternate_dates: string[] | null
+          access_time: string | null
+          bar_arrangement: Database["public"]["Enums"]["bar_arrangement"] | null
+          bar_tab_limit: number | null
+          bar_tab_prepaid: boolean | null
+          booking_form_file_id: string | null
+          booking_form_signed_at: string | null
+          booking_type_id: string | null
           brief_description: string | null
           budget_indication: number | null
-          contact_email: string | null
-          contact_name: string
-          contact_phone: string
+          bump_out_deadline: string | null
+          cancellation_approved_by: string | null
+          cancellation_approved_reason: string | null
+          cancellation_reason: string | null
+          candles_approved: boolean | null
+          card_on_file: boolean
+          catering_ordered_at: string | null
+          contact_id: string
           created_at: string
           created_by: string | null
-          date_flexible: boolean
+          decorations_notes: string | null
+          deposit_amount_due: number | null
+          deposit_received_at: string | null
+          deposit_reference: string | null
+          end_time: string | null
+          event_name: string | null
           event_type_id: string | null
-          headcount_estimate: number | null
+          external_catering_approved: boolean | null
+          final_numbers_confirmed_at: string | null
+          final_pax: number | null
+          golf_bays_booked: number
+          golf_end: string | null
+          golf_external_reference: string | null
+          golf_paid_at: string | null
+          golf_payment_status: Database["public"]["Enums"]["golf_payment_status"]
+          golf_rate_per_bay_hour: number | null
+          golf_start: string | null
           id: string
-          organisation: string | null
+          minors_attending: boolean | null
+          minors_count: number | null
+          minors_notes: string | null
+          on_hold_release_date: string | null
+          organisation_id: string | null
           owner_user_id: string | null
+          pax_max: number | null
+          pax_min: number | null
+          payment_due_at: string | null
+          payment_received_at: string | null
           preferred_date: string | null
           reference_number: string
           source: Database["public"]["Enums"]["enquiry_source"]
           space_preference_id: string | null
-          status: Database["public"]["Enums"]["enquiry_status"]
+          stage: Database["public"]["Enums"]["enquiry_stage"]
+          start_time: string | null
           updated_at: string
           venue_id: string
+          verbal_confirmation_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "enquiries"
+          isOneToOne: true
+          isSetofReturn: false
         }
       }
     }
@@ -1624,6 +2606,8 @@ export type Database = {
         | "site_visit"
         | "status_change"
         | "file_upload"
+      bar_arrangement: "tab" | "guests_pay_own" | "mixed"
+      deposit_basis: "percent_of_minimum_spend" | "flat_fee"
       enquiry_source:
         | "phone"
         | "email"
@@ -1632,15 +2616,19 @@ export type Database = {
         | "social"
         | "referral"
         | "repeat"
-      enquiry_status:
-        | "new"
-        | "qualifying"
-        | "proposal_sent"
-        | "tentative"
+      enquiry_stage:
+        | "new_enquiry"
+        | "active_enquiry"
+        | "on_hold"
+        | "stale"
+        | "blocked"
+        | "verbal_confirmation"
         | "confirmed"
+        | "deposit_paid"
+        | "paid_in_full"
         | "completed"
-        | "lost"
         | "cancelled"
+        | "lost"
       file_type:
         | "signed_proposal"
         | "floor_plan"
@@ -1648,8 +2636,16 @@ export type Database = {
         | "invoice"
         | "other"
         | "terms_and_conditions"
+      golf_payment_status: "not_required" | "invoiced" | "paid"
       hold_type: "tentative" | "confirmed"
       package_category: "food" | "beverage" | "room_hire" | "av" | "other"
+      payment_method:
+        | "eftpos"
+        | "direct_deposit"
+        | "cash"
+        | "visa"
+        | "mastercard"
+      payment_type: "deposit" | "golf" | "balance" | "other"
       quote_status:
         | "draft"
         | "sent"
@@ -1657,7 +2653,12 @@ export type Database = {
         | "declined"
         | "expired"
         | "superseded"
-      venue_role: "admin" | "manager" | "coordinator" | "viewer"
+      venue_role:
+        | "admin"
+        | "functions_manager"
+        | "duty_manager"
+        | "executive_readonly"
+        | "kitchen"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1673,12 +2674,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1702,11 +2703,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1727,11 +2728,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1752,11 +2753,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1769,11 +2770,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1797,6 +2798,8 @@ export const Constants = {
         "status_change",
         "file_upload",
       ],
+      bar_arrangement: ["tab", "guests_pay_own", "mixed"],
+      deposit_basis: ["percent_of_minimum_spend", "flat_fee"],
       enquiry_source: [
         "phone",
         "email",
@@ -1806,15 +2809,19 @@ export const Constants = {
         "referral",
         "repeat",
       ],
-      enquiry_status: [
-        "new",
-        "qualifying",
-        "proposal_sent",
-        "tentative",
+      enquiry_stage: [
+        "new_enquiry",
+        "active_enquiry",
+        "on_hold",
+        "stale",
+        "blocked",
+        "verbal_confirmation",
         "confirmed",
+        "deposit_paid",
+        "paid_in_full",
         "completed",
-        "lost",
         "cancelled",
+        "lost",
       ],
       file_type: [
         "signed_proposal",
@@ -1824,8 +2831,17 @@ export const Constants = {
         "other",
         "terms_and_conditions",
       ],
+      golf_payment_status: ["not_required", "invoiced", "paid"],
       hold_type: ["tentative", "confirmed"],
       package_category: ["food", "beverage", "room_hire", "av", "other"],
+      payment_method: [
+        "eftpos",
+        "direct_deposit",
+        "cash",
+        "visa",
+        "mastercard",
+      ],
+      payment_type: ["deposit", "golf", "balance", "other"],
       quote_status: [
         "draft",
         "sent",
@@ -1834,19 +2850,29 @@ export const Constants = {
         "expired",
         "superseded",
       ],
-      venue_role: ["admin", "manager", "coordinator", "viewer"],
+      venue_role: [
+        "admin",
+        "functions_manager",
+        "duty_manager",
+        "executive_readonly",
+        "kitchen",
+      ],
     },
   },
 } as const
 
-// Convenience aliases (not part of the generator's output — see file header).
-export type VenueRole = Database["public"]["Enums"]["venue_role"];
-export type HoldType = Database["public"]["Enums"]["hold_type"];
-export type PackageCategory = Database["public"]["Enums"]["package_category"];
-export type FileType = Database["public"]["Enums"]["file_type"];
-export type QuoteStatus = Database["public"]["Enums"]["quote_status"];
-export type EnquirySource = Database["public"]["Enums"]["enquiry_source"];
-export type EnquiryStatus = Database["public"]["Enums"]["enquiry_status"];
-export type ActivityType = Database["public"]["Enums"]["activity_type"];
-export type AccommodationBlockStatus = Database["public"]["Enums"]["accommodation_block_status"];
-export type AccommodationBookingStatus = Database["public"]["Enums"]["accommodation_booking_status"];
+export type VenueRole = Database["public"]["Enums"]["venue_role"]
+export type HoldType = Database["public"]["Enums"]["hold_type"]
+export type PackageCategory = Database["public"]["Enums"]["package_category"]
+export type FileType = Database["public"]["Enums"]["file_type"]
+export type QuoteStatus = Database["public"]["Enums"]["quote_status"]
+export type EnquirySource = Database["public"]["Enums"]["enquiry_source"]
+export type EnquiryStage = Database["public"]["Enums"]["enquiry_stage"]
+export type ActivityType = Database["public"]["Enums"]["activity_type"]
+export type AccommodationBlockStatus = Database["public"]["Enums"]["accommodation_block_status"]
+export type AccommodationBookingStatus = Database["public"]["Enums"]["accommodation_booking_status"]
+export type DepositBasis = Database["public"]["Enums"]["deposit_basis"]
+export type PaymentMethod = Database["public"]["Enums"]["payment_method"]
+export type PaymentType = Database["public"]["Enums"]["payment_type"]
+export type GolfPaymentStatus = Database["public"]["Enums"]["golf_payment_status"]
+export type BarArrangement = Database["public"]["Enums"]["bar_arrangement"]
