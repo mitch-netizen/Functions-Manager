@@ -79,18 +79,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: `This booking link allows up to ${block.nights_allowed} nights.` }, { status: 400 });
   }
 
-  const windowStart = new Date(Math.floor(Date.now() / 3_600_000) * 3_600_000).toISOString();
-  const [{ data: attempts }, { count: confirmed }] = await Promise.all([
-    admin
-      .from("public_accommodation_rate_limit")
-      .select("count")
-      .eq("ip_hash", ipHash)
-      .eq("block_id", block.id)
-      .eq("window_start", windowStart)
-      .maybeSingle(),
+  // Counted atomically before RMS, so simultaneous requests can't all get under the cap.
+  const [{ data: attempts, error: attemptsError }, { count: confirmed }] = await Promise.all([
+    admin.rpc("reserve_public_accommodation_attempt", { p_block_id: block.id, p_ip_hash: ipHash }),
     admin.from("accommodation_bookings").select("id", { count: "exact", head: true }).eq("block_id", block.id).eq("status", "confirmed"),
   ]);
-  if ((attempts?.count ?? 0) >= MAX_ATTEMPTS_PER_HOUR) {
+  if (attemptsError || (attempts ?? 0) > MAX_ATTEMPTS_PER_HOUR) {
     return NextResponse.json({ ok: false, error: "Too many booking attempts. Please try again later." }, { status: 429 });
   }
   if ((confirmed ?? 0) >= block.rooms_held) {

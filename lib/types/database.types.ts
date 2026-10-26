@@ -1560,6 +1560,10 @@ export type Database = {
         }[]
       }
       next_enquiry_reference: { Args: { p_venue_id: string }; Returns: string }
+      reserve_public_accommodation_attempt: {
+        Args: { p_block_id: string; p_ip_hash: string }
+        Returns: number
+      }
       record_public_accommodation_booking: {
         // Same generator limitation as create_public_enquiry above:
         // p_guest_email/p_guest_phone/p_honeypot have no SQL-level default
