@@ -113,7 +113,7 @@ describe("accommodation booking (RMS room block)", () => {
     const { data: closed } = await anon.rpc("get_public_accommodation_block", { p_token: closedBlock!.public_token });
     expect(closed ?? []).toEqual([]);
 
-    const { error: bookError } = await anon.rpc("record_public_accommodation_booking", {
+    const { error: bookError } = await admin.rpc("record_public_accommodation_booking", {
       p_block_token: closedBlock!.public_token,
       p_guest_name: "Closed Block Guest",
       p_guest_email: null,
@@ -126,6 +126,23 @@ describe("accommodation booking (RMS room block)", () => {
       p_honeypot: null,
     });
     expect(bookError).not.toBeNull();
+  });
+
+  it("does not let anon call record_public_accommodation_booking directly (only the server route can)", async () => {
+    const { data, error } = await anon.rpc("record_public_accommodation_booking", {
+      p_block_token: "not-a-real-token",
+      p_guest_name: "Direct Caller",
+      p_guest_email: null,
+      p_guest_phone: null,
+      p_check_in: "2027-08-31",
+      p_check_out: "2027-09-01",
+      p_room_type_code: "KING",
+      p_rms_booking_reference: "MADE-UP",
+      p_ip_hash: "made-up-hash",
+      p_honeypot: null,
+    });
+    expect(data).toBeNull();
+    expect(error?.code).toBe("42501");
   });
 
   it("silently no-ops when the honeypot field is filled in", async () => {
@@ -142,7 +159,7 @@ describe("accommodation booking (RMS room block)", () => {
       .select("id, public_token")
       .single();
 
-    const { data, error } = await anon.rpc("record_public_accommodation_booking", {
+    const { data, error } = await admin.rpc("record_public_accommodation_booking", {
       p_block_token: block!.public_token,
       p_guest_name: "Bot Guest",
       p_guest_email: null,
@@ -176,7 +193,7 @@ describe("accommodation booking (RMS room block)", () => {
       .single();
 
     for (let i = 0; i < 2; i++) {
-      const { error } = await anon.rpc("record_public_accommodation_booking", {
+      const { error } = await admin.rpc("record_public_accommodation_booking", {
         p_block_token: block!.public_token,
         p_guest_name: `Capacity Guest ${i}`,
         p_guest_email: null,
@@ -191,7 +208,7 @@ describe("accommodation booking (RMS room block)", () => {
       expect(error).toBeNull();
     }
 
-    const { error: thirdError } = await anon.rpc("record_public_accommodation_booking", {
+    const { error: thirdError } = await admin.rpc("record_public_accommodation_booking", {
       p_block_token: block!.public_token,
       p_guest_name: "Capacity Guest Overflow",
       p_guest_email: null,
@@ -225,7 +242,7 @@ describe("accommodation booking (RMS room block)", () => {
 
     const ipHash = "test-ip-accom-rate-limit";
     for (let i = 0; i < 5; i++) {
-      const { error } = await anon.rpc("record_public_accommodation_booking", {
+      const { error } = await admin.rpc("record_public_accommodation_booking", {
         p_block_token: block!.public_token,
         p_guest_name: `Rate Limit Guest ${i}`,
         p_guest_email: null,
@@ -240,7 +257,7 @@ describe("accommodation booking (RMS room block)", () => {
       expect(error).toBeNull();
     }
 
-    const { error: sixthError } = await anon.rpc("record_public_accommodation_booking", {
+    const { error: sixthError } = await admin.rpc("record_public_accommodation_booking", {
       p_block_token: block!.public_token,
       p_guest_name: "Rate Limit Guest 6",
       p_guest_email: null,

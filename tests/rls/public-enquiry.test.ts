@@ -28,8 +28,25 @@ describe("public enquiry form (Phase 6)", () => {
     expect(data).toEqual([]);
   });
 
-  it("creates an enquiry (with owner + follow-up task) through the public RPC", async () => {
+  it("does not let anon call create_public_enquiry directly (only the server route can)", async () => {
     const { data, error } = await anon.rpc("create_public_enquiry", {
+      p_venue_slug: venue.slug,
+      p_contact_name: "Direct Caller",
+      p_contact_phone: "0400000000",
+      p_contact_email: null,
+      p_preferred_date: null,
+      p_headcount_estimate: null,
+      p_event_type_id: null,
+      p_brief_description: null,
+      p_ip_hash: "made-up-hash",
+      p_honeypot: null,
+    });
+    expect(data).toBeNull();
+    expect(error?.code).toBe("42501");
+  });
+
+  it("creates an enquiry (with owner + follow-up task) through the public RPC", async () => {
+    const { data, error } = await admin.rpc("create_public_enquiry", {
       p_venue_slug: venue.slug,
       p_contact_name: "Public Visitor",
       p_contact_phone: "0400000000",
@@ -54,7 +71,7 @@ describe("public enquiry form (Phase 6)", () => {
   });
 
   it("silently no-ops when the honeypot field is filled in", async () => {
-    const { data, error } = await anon.rpc("create_public_enquiry", {
+    const { data, error } = await admin.rpc("create_public_enquiry", {
       p_venue_slug: venue.slug,
       p_contact_name: "Bot Visitor",
       p_contact_phone: "0400000000",
@@ -74,7 +91,7 @@ describe("public enquiry form (Phase 6)", () => {
   });
 
   it("rejects a submission missing contact name", async () => {
-    const { error } = await anon.rpc("create_public_enquiry", {
+    const { error } = await admin.rpc("create_public_enquiry", {
       p_venue_slug: venue.slug,
       p_contact_name: "",
       p_contact_phone: "0400000000",
@@ -92,7 +109,7 @@ describe("public enquiry form (Phase 6)", () => {
   it("rate-limits repeated submissions from the same IP within an hour", async () => {
     const ipHash = "test-ip-hash-rate-limit";
     for (let i = 0; i < 5; i++) {
-      const { error } = await anon.rpc("create_public_enquiry", {
+      const { error } = await admin.rpc("create_public_enquiry", {
         p_venue_slug: venue.slug,
         p_contact_name: `Rate Limit Test ${i}`,
         p_contact_phone: "0400000000",
@@ -107,7 +124,7 @@ describe("public enquiry form (Phase 6)", () => {
       expect(error).toBeNull();
     }
 
-    const { error: sixthError } = await anon.rpc("create_public_enquiry", {
+    const { error: sixthError } = await admin.rpc("create_public_enquiry", {
       p_venue_slug: venue.slug,
       p_contact_name: "Rate Limit Test 6",
       p_contact_phone: "0400000000",
