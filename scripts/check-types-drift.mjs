@@ -15,9 +15,12 @@ import { readFileSync } from "node:fs";
 // the formatted committed file alike. Comments and string literals are skipped.
 function namesUnderBlock(source, blockLabel) {
   // Only the public schema (the generator may put graphql_public first).
-  const publicStart = source.search(/\bpublic\s*:\s*\{/);
-  if (publicStart === -1) throw new Error('could not find the "public: {" schema');
-  const offset = source.slice(publicStart).search(new RegExp(`\\b${blockLabel}\\s*:\\s*\\{`));
+  // Keys may or may not be quoted, depending on the generator version.
+  const publicStart = source.search(/["']?\bpublic["']?\s*:\s*\{/);
+  if (publicStart === -1) {
+    throw new Error(`could not find the "public: {" schema (${source.length} chars; starts: ${JSON.stringify(source.slice(0, 300))})`);
+  }
+  const offset = source.slice(publicStart).search(new RegExp(`["']?\\b${blockLabel}["']?\\s*:\\s*\\{`));
   const blockStart = offset === -1 ? -1 : publicStart + offset;
   if (blockStart === -1) throw new Error(`could not find "${blockLabel}: {" block`);
 
@@ -31,7 +34,10 @@ function namesUnderBlock(source, blockLabel) {
     } else if (c === "/" && source[i + 1] === "*") {
       i = source.indexOf("*/", i + 2) + 1;
     } else if (c === '"' || c === "'" || c === "`") {
+      const open = i;
       for (i++; i < source.length && source[i] !== c; i++) if (source[i] === "\\") i++;
+      // A quoted key, e.g. "enquiries": {
+      if (depth === 1 && /^\??\s*:/.test(source.slice(i + 1, i + 20))) names.add(source.slice(open + 1, i));
     } else if (c === "{") {
       depth++;
     } else if (c === "}") {
