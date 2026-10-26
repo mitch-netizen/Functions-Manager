@@ -1550,7 +1550,6 @@ export type Database = {
           name: string
         }[]
       }
-      has_app: { Args: { p_app: string }; Returns: boolean }
       get_public_venue_info: {
         Args: { p_slug: string }
         Returns: {

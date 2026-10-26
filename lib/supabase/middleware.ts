@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/types/database.types";
 import { APP_KEY, PORTAL_URL, portalLoginUrl, portalNoAccessUrl, supabaseCookieOptions } from "@/lib/auth/portal";
@@ -55,7 +56,9 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Fails closed: an error (including the check not existing yet) means no access.
-  const { data: allowed, error } = await supabase.rpc("has_app", { p_app: APP_KEY });
+  // has_app() comes from the shared staff-portal migration (queens-apps repo), so it
+  // isn't in this app's generated types.
+  const { data: allowed, error } = await (supabase as unknown as SupabaseClient).rpc("has_app", { p_app: APP_KEY });
   if (error || allowed !== true) {
     return NextResponse.redirect(portalNoAccessUrl());
   }
