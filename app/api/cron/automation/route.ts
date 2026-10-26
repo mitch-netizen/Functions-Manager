@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runAllRulesForVenue } from "@/lib/automation/rules";
@@ -16,8 +17,11 @@ import { runAllRulesForVenue } from "@/lib/automation/rules";
  * venue, not a single user's request.
  */
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Fails closed: with no CRON_SECRET set, nothing can call this.
+  const secret = process.env.CRON_SECRET;
+  const expected = Buffer.from(`Bearer ${secret}`);
+  const given = Buffer.from(request.headers.get("authorization") ?? "");
+  if (!secret || given.length !== expected.length || !timingSafeEqual(given, expected)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
