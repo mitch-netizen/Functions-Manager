@@ -10,25 +10,38 @@
 // regenerated."
 import { readFileSync } from "node:fs";
 
+// Names directly inside `<blockLabel>: { ... }`, found by brace depth rather
+// than indentation, so it reads the generator's raw (unformatted) output and
+// the formatted committed file alike. Comments and string literals are skipped.
 function namesUnderBlock(source, blockLabel) {
-  const blockStart = source.indexOf(`${blockLabel}: {`);
+  // Only the public schema (the generator may put graphql_public first).
+  const publicStart = source.search(/\bpublic\s*:\s*\{/);
+  if (publicStart === -1) throw new Error('could not find the "public: {" schema');
+  const offset = source.slice(publicStart).search(new RegExp(`\\b${blockLabel}\\s*:\\s*\\{`));
+  const blockStart = offset === -1 ? -1 : publicStart + offset;
   if (blockStart === -1) throw new Error(`could not find "${blockLabel}: {" block`);
 
+  const names = new Set();
   let depth = 0;
-  let i = source.indexOf("{", blockStart);
-  const blockContentStart = i + 1;
-  for (; i < source.length; i++) {
-    if (source[i] === "{") depth++;
-    else if (source[i] === "}") {
+  for (let i = source.indexOf("{", blockStart); i < source.length; i++) {
+    const c = source[i];
+    if (c === "/" && source[i + 1] === "/") {
+      i = source.indexOf("\n", i);
+      if (i === -1) break;
+    } else if (c === "/" && source[i + 1] === "*") {
+      i = source.indexOf("*/", i + 2) + 1;
+    } else if (c === '"' || c === "'" || c === "`") {
+      for (i++; i < source.length && source[i] !== c; i++) if (source[i] === "\\") i++;
+    } else if (c === "{") {
+      depth++;
+    } else if (c === "}") {
       depth--;
       if (depth === 0) break;
+    } else if (depth === 1 && /[A-Za-z_]/.test(c) && !/[\w$]/.test(source[i - 1] ?? "")) {
+      const m = /^(\w+)\??\s*:/.exec(source.slice(i, i + 200));
+      if (m) names.add(m[1]);
+      i += (m ? m[0].length : 1) - 1;
     }
-  }
-  const body = source.slice(blockContentStart, i);
-
-  const names = new Set();
-  for (const match of body.matchAll(/^\s{6}(\w+): \{/gm)) {
-    names.add(match[1]);
   }
   return names;
 }

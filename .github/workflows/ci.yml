@@ -47,4 +47,4 @@ jobs:
         run: npm run test:rls
 
       - name: Check lib/types/database.types.ts is not out of date
-        run: supabase gen types typescript --local > /tmp/generated.types.ts && node scripts/check-types-drift.mjs /tmp/generated.types.ts
+        run: supabase gen types typescript --local --schema public > /tmp/generated.types.ts && node scripts/check-types-drift.mjs /tmp/generated.types.ts
