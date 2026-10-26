@@ -39,6 +39,7 @@ jobs:
             | sed -e 's/^API_URL=/SUPABASE_TEST_URL=/' \
                   -e 's/^ANON_KEY=/SUPABASE_TEST_ANON_KEY=/' \
                   -e 's/^SERVICE_ROLE_KEY=/SUPABASE_TEST_SERVICE_ROLE_KEY=/' \
+            | sed -e 's/^\([A-Z_]*\)="\(.*\)"$/\1=\2/' \
             | grep -E '^SUPABASE_TEST_' \
             >> "$GITHUB_ENV"
 
